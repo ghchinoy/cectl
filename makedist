@@ -1,0 +1,46 @@
+#!/bin/bash
+# Go cross-compile 
+# Usually, only the VERSION changes.
+# The OSLIST and ARCHLIST can change, as well.
+# No need to change anything below ####
+# 
+
+VERSION=0.1.0
+
+TOOLNAME=cectl
+OSLIST=(linux darwin windows)
+ARCHLIST=(amd64 386)
+
+####
+
+DISTDIR=dist/${VERSION}
+mkdir -p ${DISTDIR}
+
+echo "Compiling version ${VERSION}:"
+for os in ${OSLIST[*]}; do
+  for arch in ${ARCHLIST[*]}; do
+  	EXT=""
+  	if [[ ${os} == "windows" ]]; then
+  		EXT=".exe"
+  	fi
+  	GOOS=${os}
+  	GOARCH=${arch}
+  	echo "Compiling ${GOOS}/${GOARCH}..."
+  	OUTPUTFILE=${DISTDIR}/${TOOLNAME}-${VERSION}-${GOOS}.${GOARCH}${EXT}
+    GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${OUTPUTFILE} main.go version.go
+    file ${OUTPUTFILE}
+  done
+done
+# for distributions - homebrew & scoop
+cd ${DISTDIR}
+# for homebrew distribution, rename darwin.amd64, gz, shasum
+cp ${TOOLNAME}-${VERSION}-darwin.amd64 ${TOOLNAME}
+tar -czf ${TOOLNAME}-${VERSION}.tar.gz ${TOOLNAME}
+shasum -a 256 ${TOOLNAME}-${VERSION}.tar.gz > ${TOOLNAME}-${VERSION}.tar.gz.shasum256
+# for scoop distribution, rename windows.amd64.exe, zip, shasum
+cp ${TOOLNAME}-${VERSION}-windows.amd64.exe ${TOOLNAME}.exe
+zip ${TOOLNAME}-${VERSION}.64.exe.zip ${TOOLNAME}.exe
+shasum -a 256 ${TOOLNAME}-${VERSION}.64.exe.zip > ${TOOLNAME}-${VERSION}.64.exe.zip.shasum256
+# generate bash completion, may want to make this into a command (cectl completion) a la
+# https://github.com/kubernetes/kubernetes/blob/master/pkg/kubectl/cmd/completion.go
+go run ../../bashcompletion/main.go
