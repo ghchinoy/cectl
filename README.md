@@ -9,12 +9,12 @@ Usage:
   cectl [command]
 
 Available Commands:
-  eb          Element Builder commands
-  elements    manage elements on the platform
-  formulas    manage formulas on the platform
-  help        Help about any command
-  profiles    Manage profiles
-  version     version of cectl
+  executions        Manage Formula Instance Executions
+  formula-instances Manage Formula Instances
+  formulas          manage formulas on the platform
+  help              Help about any command
+  profiles          Manage profiles
+  version           version of cectl
 
 Flags:
   -h, --help   help for cectl
