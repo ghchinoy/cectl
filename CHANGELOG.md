@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20170707 0.2.0
+
+* `formulas list` now returns the API field for manual triggered APIs, with presence indicating a Formula as a Resource
+
 ## 20170509 0.1.0
 
 *  `formulas list` with `--json`/`-j` json output option

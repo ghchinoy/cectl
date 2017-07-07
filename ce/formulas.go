@@ -24,6 +24,7 @@ type Formula struct {
 	Active         bool            `json:"active"`
 	SingleThreaded bool            `json:"singleThreaded"`
 	Configuration  []Configuration `json:"configuration"`
+	API            string          `json:"api"`
 }
 
 // Step represents a Formula step
