@@ -33,7 +33,7 @@ OS X, Linux, and Windows binaries are available.
 
 ```
 brew update
-brew install ghchinoy/ce/rwctl
+brew install ghchinoy/ce/cectl
 ```
 
 **On Windows, with [`scoop`](http://scoop.sh/)**
@@ -67,7 +67,7 @@ Refer to [scoop.sh](http://scoop.sh/) for more info on scoop.
 
 ### Option 2 - Download a release from GitHub
 
-View the [releases]() page for the `cectl` GitHub project and find the appropriate archive for your operating system and architecture.  For OS X systems, remember to use the Darwin archive.
+View the [releases](https://github.com/ghchinoy/cectl/releases) page for the `cectl` GitHub project and find the appropriate archive for your operating system and architecture.  For OS X systems, remember to use the Darwin archive.
 
 ### Option 3 - Build from source
 
