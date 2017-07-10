@@ -97,3 +97,5 @@ org="ORG-HASH-HERE"
 ```
 
 You may define multiple CE environment targets with different TOML blocks.
+
+Utilize profiles by adding the profile flag, ex. `--profile snapshot`
