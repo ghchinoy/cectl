@@ -33,7 +33,7 @@ var formulaDetailsCmd = &cobra.Command{
 	Long:  `Given a Formula ID, print out details`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		formulaformat := "/formulas/%s"
+		//formulaformat := "/formulas/%s"
 
 		if len(args) < 1 {
 			fmt.Println("must supply an ID of a Formula")
@@ -49,36 +49,45 @@ var formulaDetailsCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(formulaformat, args[0]),
-		)
+		/*
+			url := fmt.Sprintf("%s%s",
+				base,
+				fmt.Sprintf(formulaformat, args[0]),
+			)
+		*/
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
+		bodybytes, statuscode, err := getFormulaDetails(args[0], fmt.Sprintf("%s", base), auth)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println("unable to retrieve formula", err.Error())
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+		/*
+			client := &http.Client{}
+			req, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				fmt.Println("Can't construct request", err.Error())
+				os.Exit(1)
+			}
+			req.Header.Add("Authorization", auth)
+			req.Header.Add("Accept", "application/json")
+			req.Header.Add("Content-Type", "application/json")
+			resp, err := client.Do(req)
+			if err != nil {
+				fmt.Println("Cannot process response", err.Error())
+				os.Exit(1)
+			}
+			bodybytes, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+		*/
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.Status)
+		if statuscode != 200 {
+			fmt.Println(statuscode)
 			var ficr ce.FormulaInstanceCreationResponse
 			err = json.Unmarshal(bodybytes, &ficr)
 			if err != nil {
@@ -103,6 +112,37 @@ var formulaDetailsCmd = &cobra.Command{
 		}
 
 	},
+}
+
+func getFormulaDetails(formulaID, base, auth string) ([]byte, int, error) {
+
+	var bodybytes []byte
+
+	formulaformat := "/formulas/%s"
+	url := fmt.Sprintf("%s%s",
+		base,
+		fmt.Sprintf(formulaformat, formulaID),
+	)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Can't construct request", err.Error())
+		os.Exit(1)
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return bodybytes, resp.StatusCode, err
+
+	}
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	return bodybytes, resp.StatusCode, nil
+
 }
 
 func init() {

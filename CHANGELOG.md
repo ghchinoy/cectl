@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 20170711 0.3.0
+
+* Retry Formula Instance Execution via `executions retry <execution_id>`
+* Common Resources: `resources` - with `resources list`
+
 ## 20170707 0.2.0
 
 * `formulas list` now returns the API field for manual triggered APIs, with presence indicating a Formula as a Resource
