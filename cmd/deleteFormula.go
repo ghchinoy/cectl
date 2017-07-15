@@ -42,15 +42,13 @@ var deleteFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		formulaformat := "/formulas/%s"
-
 		base := viper.Get(profile + ".base")
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(formulaformat, args[0]),
+			fmt.Sprintf(ce.FormulaURIFormat, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 

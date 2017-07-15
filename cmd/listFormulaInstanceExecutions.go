@@ -50,11 +50,9 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		executionsformat := "/formulas/instances/%s/executions"
-
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(executionsformat, args[0]),
+			fmt.Sprintf(ce.FormulaExecutionsURIFormat, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 

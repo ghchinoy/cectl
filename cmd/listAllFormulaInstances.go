@@ -44,7 +44,7 @@ var listAllFormulaInstancesCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		url := fmt.Sprintf("%s%s", base, "/formulas/instances")
+		url := fmt.Sprintf("%s%s", base, ce.FormulaInstancesURI)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		client := &http.Client{}

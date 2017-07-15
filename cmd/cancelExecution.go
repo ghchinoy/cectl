@@ -34,8 +34,6 @@ var cancelExecutionCmd = &cobra.Command{
 	Long:  `Given an Execution ID, cancel the Formula Instance Execution`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		executioncancellationformat := "/formulas/instances/executions/%s"
-
 		// construct a fixed json body for sending cancelled status
 		cancelmessage := struct {
 			Status string `json:"status"`
@@ -62,7 +60,7 @@ var cancelExecutionCmd = &cobra.Command{
 
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(executioncancellationformat, args[0]),
+			fmt.Sprintf(ce.FormulaCancelExecutionURIFormat, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 

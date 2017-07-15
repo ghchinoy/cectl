@@ -12,6 +12,23 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+const (
+	// FormulasURI is the base URI for Formulas
+	FormulasURI = "/formulas"
+	// FormulaCancelExecutionURIFormat is the API URI for cancelling a formula instance execution
+	FormulaCancelExecutionURIFormat = "/formulas/instances/executions/%s"
+	// FormulaExecutionsURIFormat is the URI to obtain executions of a Formula Instance
+	FormulaExecutionsURIFormat = "/formulas/instances/%s/executions"
+	// FormulaRetryExecutionURI is the URI to retry a Formula execution
+	FormulaRetryExecutionURI = "/formulas/instances/executions/%s/retries"
+	// FormulaURIFormat is the main, partial API URI for Formula
+	FormulaURIFormat = "/formulas/%s"
+	// FormulaInstancesURI is the main API URI for Formula Instances
+	FormulaInstancesURI = "/formulas/instances"
+	// FormulaInstancesURIFormat is the URI to obtain instances of a Formula template
+	FormulaInstancesURIFormat = "/formulas/%s/instances"
+)
+
 // Formula represents the structure of a CE Formula
 type Formula struct {
 	ID             int             `json:"id"`

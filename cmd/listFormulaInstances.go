@@ -35,8 +35,6 @@ var listFormulaInstancesCmd = &cobra.Command{
 	Long:  `Retrieve a list of all instances associated with a particular formula template.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		formulainstancesformat := "/formulas/%s/instances"
-
 		if len(args) < 1 {
 			fmt.Println("must supply an ID of a Formula")
 			os.Exit(1)
@@ -53,7 +51,7 @@ var listFormulaInstancesCmd = &cobra.Command{
 
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(formulainstancesformat, args[0]),
+			fmt.Sprintf(ce.FormulaInstancesURIFormat, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 

@@ -46,11 +46,9 @@ var retryFormulaInstanceExecutionCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		retryexecutionsformat := "/formulas/instances/executions/%s/retries"
-
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(retryexecutionsformat, args[0]),
+			fmt.Sprintf(ce.FormulaRetryExecutionURI, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 

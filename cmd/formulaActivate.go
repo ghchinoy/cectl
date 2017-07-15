@@ -67,11 +67,9 @@ var formulaActivateCmd = &cobra.Command{
 		formulaRequestBytes, err := json.Marshal(formula)
 
 		// PATCH to set the Formula back
-		activateDeactivateURIFormat := "/formulas/%s"
-
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(activateDeactivateURIFormat, args[0]),
+			fmt.Sprintf(ce.FormulaURIFormat, args[0]),
 		)
 
 		client := &http.Client{}

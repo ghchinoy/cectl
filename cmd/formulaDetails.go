@@ -118,10 +118,9 @@ func getFormulaDetails(formulaID, base, auth string) ([]byte, int, error) {
 
 	var bodybytes []byte
 
-	formulaformat := "/formulas/%s"
 	url := fmt.Sprintf("%s%s",
 		base,
-		fmt.Sprintf(formulaformat, formulaID),
+		fmt.Sprintf(ce.FormulaURIFormat, formulaID),
 	)
 
 	client := &http.Client{}

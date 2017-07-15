@@ -55,10 +55,9 @@ This will only invoke a manually triggerable Formula.`,
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		triggerformat := "/formulas/instances/%s/executions"
 		url := fmt.Sprintf("%s%s",
 			base,
-			fmt.Sprintf(triggerformat, args[0]),
+			fmt.Sprintf(ce.FormulaExecutionsURIFormat, args[0]),
 		)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
