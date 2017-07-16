@@ -21,7 +21,7 @@ import (
 // formulasCmd represents the formulas command
 var formulasCmd = &cobra.Command{
 	Use:   "formulas",
-	Short: "manage formulas on the platform",
+	Short: "Manage formulas on the platform",
 	Long:  `Currently allows listing formulas and execution details`,
 }
 

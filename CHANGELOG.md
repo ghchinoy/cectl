@@ -4,6 +4,7 @@
 
 * Retry Formula Instance Execution via `executions retry <execution_id>`
 * Common Resources: `resources` - with `resources list`
+* Profiles broken out into `profiles list` and `profiles add` from simply `profiles` (which listed existing profiles, only)
 
 ## 20170707 0.2.0
 

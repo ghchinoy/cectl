@@ -1,5 +1,4 @@
-// Copyright © 2017 G. Hussain Chinoy <ghchinoy@gmail.com>
-//
+// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -18,30 +17,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// profilesCmd represents the profile command
-var profilesCmd = &cobra.Command{
-	Use:   "profiles",
-	Short: "Manage profiles",
-	Long:  `Add, remove, list profiles to manage Cloud Elements access`,
+// addProfileCmd represents the addProfile command
+var addProfileCmd = &cobra.Command{
+	Use:   "add <profile>",
+	Short: "add a new profile",
+	Long:  `Adds a new profile to the available profiles. Provide a name to get started.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile toml, if not, add this profile and set it to default
+	},
 }
 
 func init() {
-	RootCmd.AddCommand(profilesCmd)
+	profilesCmd.AddCommand(addProfileCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// profileCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// addProfileCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// profileCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	profilesCmd.PersistentFlags().StringVar(&cfgFile, "config", "", cfgHelp)
-	profilesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
-	// Set bash-completion
-	validConfigFilenames := []string{"toml", ""}
-	profilesCmd.PersistentFlags().SetAnnotation("config", cobra.BashCompFilenameExt, validConfigFilenames)
-
+	// addProfileCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
