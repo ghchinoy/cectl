@@ -56,7 +56,7 @@ var addProfileCmd = &cobra.Command{
 		viper.Set(profile+".org", org)
 		viper.Set(profile+".user", user)
 
-		err := writeConfigFile(true)
+		err := writeConfigAs(viper.ConfigFileUsed(), true)
 		if err != nil {
 			fmt.Println("Unable to write config file", err.Error())
 			fmt.Printf("Config file %s unchanged.\n", viper.ConfigFileUsed())

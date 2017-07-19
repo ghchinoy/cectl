@@ -51,7 +51,13 @@ var setProfileCmd = &cobra.Command{
 			viper.Set("default.label", profile)
 
 			// writing back has a PR to make this more formal: https://github.com/spf13/viper/pull/287
-			err := writeConfigFile(true)
+			// Once that PR is merged, replace writeConfigFile with
+			/*
+				if err := viper.WriteConfigAs(viper.ConfigFileUsed()); err != nil {
+					fmt.Fatal(err)
+				}
+			*/
+			err := writeConfigAs(viper.ConfigFileUsed(), true)
 			if err != nil {
 				fmt.Println("Unable to write config file", err.Error())
 				fmt.Printf("Config file %s unchanged.\n", viper.ConfigFileUsed())
@@ -83,15 +89,12 @@ var setProfileCmd = &cobra.Command{
 	},
 }
 
-func writeConfigFile(force bool) error {
-	filename := viper.ConfigFileUsed()
-	//fmt.Println(configFile)
-	//fmt.Printf("%+v\n", viper.AllSettings())
+func writeConfigAs(filename string, force bool) error {
+
 	t, err := toml.TreeFromMap(viper.AllSettings())
 	if err != nil {
 		return err
 	}
-	//fmt.Printf("%s", t)
 	s := t.String()
 
 	var flags int
