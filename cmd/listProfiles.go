@@ -32,9 +32,16 @@ var listProfilesCmd = &cobra.Command{
 		if len(args) > 0 {
 			profile = args[0]
 		}
-		fmt.Printf("%7s: %s\n", "profile", profile)
+		fmt.Printf("%7s: %s", "profile", profile)
 		if viper.IsSet(profile) {
 			p := viper.GetStringMap(profile)
+
+			if val, ok := p["label"]; ok {
+				fmt.Printf(" (%s)\n", val)
+			} else {
+				fmt.Println()
+			}
+
 			for k, v := range p {
 				if k == "base" {
 					fmt.Printf("%7s: %s\n", k, v)
