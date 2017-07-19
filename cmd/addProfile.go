@@ -14,7 +14,13 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // addProfileCmd represents the addProfile command
@@ -23,7 +29,39 @@ var addProfileCmd = &cobra.Command{
 	Short: "add a new profile",
 	Long:  `Adds a new profile to the available profiles. Provide a name to get started.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// check for profile toml, if not, add this profile and set it to default
+		// check for args, if arg, then list the details for that particular profile
+		if len(args) > 0 {
+			profile = args[0]
+		} else {
+			fmt.Println("please provide a profile name to add, profile add <name>")
+			os.Exit(1)
+		}
+		fmt.Printf("%7s: %s\n", "profile", profile)
+		if viper.IsSet(profile) {
+			fmt.Printf("Profile %s exists.\n", profile)
+			os.Exit(1)
+		}
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("base URI: ")
+		base, _ := reader.ReadString('\n')
+		base = strings.Replace(base, "\n", "", -1)
+		fmt.Print("user token: ")
+		user, _ := reader.ReadString('\n')
+		user = strings.Replace(user, "\n", "", -1)
+		fmt.Print("org token: ")
+		org, _ := reader.ReadString('\n')
+		org = strings.Replace(org, "\n", "", -1)
+
+		viper.Set(profile+".base", base)
+		viper.Set(profile+".org", org)
+		viper.Set(profile+".user", user)
+
+		err := writeConfigFile(true)
+		if err != nil {
+			fmt.Println("Unable to write config file", err.Error())
+			fmt.Printf("Config file %s unchanged.\n", viper.ConfigFileUsed())
+		}
+		fmt.Printf("Added profile %s\n", profile)
 	},
 }
 
