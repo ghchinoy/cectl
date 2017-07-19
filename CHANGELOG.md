@@ -1,11 +1,12 @@
 # CHANGELOG
 
-## 20170711 0.3.0
+## 20170719 0.3.0
 
 * Retry Formula Instance Execution via `executions retry <execution_id>`
 * Common Resources: `resources` - with `resources list`
-* Profiles broken out into `profiles list` and `profiles add` from simply `profiles` (which listed existing profiles, only)
+* Profiles broken out into `profiles list` (list existing profiles), `profiles add` (add a new profile), and `profiles set` (set default profile) from simply `profiles` (which listed existing profiles, only) - note, still doesn't create a config file if one does not already exist
 * Added `hubs`, with `hubs list`
+* Activate and deactivate a Formula `formula activate`, `formula deactivate`
 
 ## 20170707 0.2.0
 

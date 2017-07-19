@@ -15,11 +15,8 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"strconv"
 
@@ -51,7 +48,7 @@ var formulaActivateCmd = &cobra.Command{
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		// Get the Formula
-		formulaResponseBytes, statuscode, err := getFormulaDetails(args[0], fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -62,48 +59,27 @@ var formulaActivateCmd = &cobra.Command{
 			fmt.Println("Unable to understand formula response", err.Error())
 			os.Exit(1)
 		}
+
 		// Change the Formula to Active
 		formula.Active = true
-		formulaRequestBytes, err := json.Marshal(formula)
 
 		// PATCH to set the Formula back
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.FormulaURIFormat, args[0]),
-		)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("PATCH", url, bytes.NewReader(formulaRequestBytes))
-		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
-			os.Exit(1)
-		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-
-		err = json.Unmarshal(bodybytes, &formula)
+		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base.(string), auth, formula)
+		err = json.Unmarshal(patchBytes, &formula)
 		if err != nil {
 			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
 			os.Exit(1)
 		}
 
 		if outputJSON {
-			fmt.Printf("%s\n", bodybytes)
+			fmt.Printf("%s\n", patchBytes)
 			return
 		}
 
 		if statuscode != 200 {
 			fmt.Println(statuscode)
 			var ficr ce.FormulaInstanceCreationResponse
-			err = json.Unmarshal(bodybytes, &ficr)
+			err = json.Unmarshal(patchBytes, &ficr)
 			if err != nil {
 				fmt.Println("Cannot process response, tried error message")
 				os.Exit(1)
@@ -113,13 +89,13 @@ var formulaActivateCmd = &cobra.Command{
 		}
 
 		var f ce.Formula
-		err = json.Unmarshal(bodybytes, &f)
+		err = json.Unmarshal(patchBytes, &f)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 
-		formulaResponseBytes, statuscode, err = getFormulaDetails(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)

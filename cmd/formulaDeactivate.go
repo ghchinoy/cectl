@@ -15,24 +15,126 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 
+	"github.com/ghchinoy/cectl/ce"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // formulaDeactivateCmd represents the formulaDeactivate command
 var formulaDeactivateCmd = &cobra.Command{
-	Use:   "formulaDeactivate",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "deactivate",
+	Short: "Deactivate a Formula template",
+	Long:  `Sets a Formula template to an inactive state`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("formulaDeactivate called")
+		if !viper.IsSet(profile + ".base") {
+			fmt.Println("Can't find info for profile", profile)
+			os.Exit(1)
+		}
+
+		if len(args) < 1 {
+			fmt.Println("must supply an ID of a Formula")
+			os.Exit(1)
+		}
+
+		base := viper.Get(profile + ".base")
+		user := viper.Get(profile + ".user")
+		org := viper.Get(profile + ".org")
+		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+
+		// Get the Formula
+		formulaResponseBytes, statuscode, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		if statuscode != 200 {
+			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
+			os.Exit(1)
+		}
+		var formula ce.Formula
+		err = json.Unmarshal(formulaResponseBytes, &formula)
+		if err != nil {
+			fmt.Println("Unable to understand formula response", err.Error())
+			os.Exit(1)
+		}
+
+		// Change the Formula to Active
+		formula.Active = false
+
+		// PATCH to set the Formula back
+		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base.(string), auth, formula)
+		err = json.Unmarshal(patchBytes, &formula)
+		if err != nil {
+			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
+			os.Exit(1)
+		}
+
+		if outputJSON {
+			fmt.Printf("%s\n", patchBytes)
+			return
+		}
+
+		if statuscode != 200 {
+			fmt.Println(statuscode)
+			var ficr ce.FormulaInstanceCreationResponse
+			err = json.Unmarshal(patchBytes, &ficr)
+			if err != nil {
+				fmt.Println("Cannot process response, tried error message")
+				os.Exit(1)
+			}
+			fmt.Println(ficr.Message)
+			os.Exit(1)
+		}
+
+		var f ce.Formula
+		err = json.Unmarshal(patchBytes, &f)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		formulaResponseBytes, statuscode, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		if statuscode != 200 {
+			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
+			os.Exit(1)
+		}
+		err = json.Unmarshal(formulaResponseBytes, &f)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		var instancecount string
+		instances, err := ce.GetInstancesOfFormula(f.ID, base.(string), auth)
+		if err != nil {
+			// unable to retrieve instances of formula!
+			instancecount = "N/A"
+		}
+		instancecount = strconv.Itoa(len(instances))
+
+		api := "N/A"
+		if f.Triggers[0].Type == "manual" {
+			api = f.API
+		}
+
+		data := [][]string{}
+		data = append(data, []string{
+			strconv.Itoa(f.ID),
+			f.Name,
+			strconv.FormatBool(f.Active),
+			strconv.Itoa(len(f.Steps)),
+			f.Triggers[0].Type,
+			instancecount,
+			api,
+		})
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"ID", "Name", "active", "steps", "trigger", "instances", "api"})
+		table.SetBorder(false)
+		table.AppendBulk(data)
+		table.Render()
 	},
 }
 

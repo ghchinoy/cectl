@@ -1,6 +1,7 @@
 package ce
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -188,6 +189,8 @@ func FormulaDetailsTableOutput(f Formula) error {
 
 		// Steps
 
+		fmt.Println("Steps")
+
 		data = [][]string{}
 
 		for _, v := range f.Steps {
@@ -205,7 +208,73 @@ func FormulaDetailsTableOutput(f Formula) error {
 		table.SetBorder(false)
 		table.AppendBulk(data)
 		table.Render()
+
+		if f.API != "" {
+			fmt.Printf("\n%s -H 'Elements-Formula-Instance-Id: '\n", f.API)
+		}
 	}
 
 	return nil
+}
+
+// FormulaDetailsAsBytes returns Formula template details as bytes
+func FormulaDetailsAsBytes(formulaID, base, auth string) ([]byte, int, error) {
+
+	var bodybytes []byte
+
+	url := fmt.Sprintf("%s%s",
+		base,
+		fmt.Sprintf(FormulaURIFormat, formulaID),
+	)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Can't construct request", err.Error())
+		os.Exit(1)
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return bodybytes, resp.StatusCode, err
+
+	}
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	return bodybytes, resp.StatusCode, nil
+
+}
+
+// FormulaUpdate performs a PATCH with a Formula
+func FormulaUpdate(formulaID, base, auth string, formula Formula) ([]byte, int, error) {
+
+	formulaRequestBytes, err := json.Marshal(formula)
+	if err != nil {
+		return nil, -1, err
+	}
+	url := fmt.Sprintf("%s%s",
+		base,
+		fmt.Sprintf(FormulaURIFormat, formulaID),
+	)
+	client := &http.Client{}
+	req, err := http.NewRequest("PATCH", url, bytes.NewReader(formulaRequestBytes))
+	if err != nil {
+		fmt.Println("Can't construct request", err.Error())
+		os.Exit(1)
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Cannot process response", err.Error())
+		os.Exit(1)
+	}
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	return bodybytes, resp.StatusCode, nil
 }
