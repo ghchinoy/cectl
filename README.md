@@ -11,9 +11,12 @@ Usage:
 Available Commands:
   executions        Manage Formula Instance Executions
   formula-instances Manage Formula Instances
-  formulas          manage formulas on the platform
+  formulas          Manage formulas on the platform
   help              Help about any command
+  hubs              Hub management
+  jobs              Manage jobs on the platform
   profiles          Manage profiles
+  resources         Manage common resources
   version           version of cectl
 
 Flags:
