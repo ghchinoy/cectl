@@ -31,8 +31,6 @@ var formulaDetailsCmd = &cobra.Command{
 	Long:  `Given a Formula ID, print out details`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//formulaformat := "/formulas/%s"
-
 		if len(args) < 1 {
 			fmt.Println("must supply an ID of a Formula")
 			os.Exit(1)
@@ -47,12 +45,6 @@ var formulaDetailsCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		/*
-			url := fmt.Sprintf("%s%s",
-				base,
-				fmt.Sprintf(formulaformat, args[0]),
-			)
-		*/
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		bodybytes, statuscode, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
