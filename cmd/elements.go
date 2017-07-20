@@ -24,6 +24,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var orderBy, filterBy string
+
 // elementsCmd represents the elements command
 var elementsCmd = &cobra.Command{
 	Use:   "elements",
@@ -64,7 +66,7 @@ var listElementsCmd = &cobra.Command{
 			return
 		}
 		// output
-		ce.OutputElementsTable(bodybytes)
+		ce.OutputElementsTable(bodybytes, orderBy, filterBy)
 	},
 }
 
@@ -82,6 +84,15 @@ var elementInstancesCmd = &cobra.Command{
 	Use:   "instances",
 	Short: "List the Instances of an Element",
 	Long:  `List the Instances associated with an Element`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var elementMetadataCmd = &cobra.Command{
+	Use:   "metadata",
+	Short: "Display Metadata of an Element",
+	Long:  `Display Metadata of an Element`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 	},
@@ -106,12 +117,19 @@ func getAuth(profile string) (map[string]string, error) {
 func init() {
 	RootCmd.AddCommand(elementsCmd)
 	elementsCmd.AddCommand(listElementsCmd)
-	elementsCmd.AddCommand(elementKeysCmd)
+	elementsCmd.AddCommand(elementMetadataCmd)
 	elementsCmd.AddCommand(elementDocsCmd)
 	elementsCmd.AddCommand(elementInstancesCmd)
 
 	elementsCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	elementsCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	elementsCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
+
+	// order-by flag: Order element list by
+	// --order-by key|name|id|hub
+	listElementsCmd.Flags().StringVarP(&orderBy, "order", "", "", "order element list")
+	// filter-by flag: Show only elements where filter is true
+	// --filter-by active|deleted|private|beta|cloneable|extendable
+	//listElementsCmd.Flags().StringVarP(&filterBy, "filter", "", "", "elements where filter is true")
 
 }

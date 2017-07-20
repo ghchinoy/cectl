@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
@@ -71,6 +73,27 @@ type ElementAuthentication struct {
 	Type string `json:"type,omitempty"`
 }
 
+// Elements is a struct container for a list of elements, used in sorting
+type Elements []Element
+
+func (elements Elements) Len() int           { return len(elements) }
+func (elements Elements) Less(i, j int) bool { return elements[i].ID < elements[j].ID }
+func (elements Elements) Swap(i, j int)      { elements[i], elements[j] = elements[j], elements[i] }
+
+// ByHub implements sort.Interface for Elements
+type ByHub []Element
+
+func (e ByHub) Len() int           { return len(e) }
+func (e ByHub) Less(i, j int) bool { return e[i].Hub < e[j].Hub }
+func (e ByHub) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
+
+// ByName implements sort.Interface for Elements
+type ByName []Element
+
+func (e ByName) Len() int           { return len(e) }
+func (e ByName) Less(i, j int) bool { return strings.ToLower(e[i].Name) < strings.ToLower(e[j].Name) }
+func (e ByName) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
+
 // GetAllElements returns all Elements as bytes
 func GetAllElements(base, auth string) ([]byte, int, string, error) {
 
@@ -100,12 +123,18 @@ func GetAllElements(base, auth string) ([]byte, int, string, error) {
 }
 
 // OutputElementsTable writes out a tabular view of the elements list
-func OutputElementsTable(elementsbytes []byte) {
-	var elements []Element
+func OutputElementsTable(elementsbytes []byte, orderBy string, filterBy string) {
+	var elements Elements
 	err := json.Unmarshal(elementsbytes, &elements)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
+	}
+	sort.Sort(elements)
+	if orderBy == "name" {
+		sort.Sort(ByName(elements))
+	} else if orderBy == "hub" {
+		sort.Sort(ByHub(elements))
 	}
 	data := [][]string{}
 	for _, v := range elements {
