@@ -116,14 +116,15 @@ func getAuth(profile string) (map[string]string, error) {
 
 func init() {
 	RootCmd.AddCommand(elementsCmd)
-	elementsCmd.AddCommand(listElementsCmd)
-	elementsCmd.AddCommand(elementMetadataCmd)
-	elementsCmd.AddCommand(elementDocsCmd)
-	elementsCmd.AddCommand(elementInstancesCmd)
 
 	elementsCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	elementsCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	elementsCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
+
+	elementsCmd.AddCommand(listElementsCmd)
+	elementsCmd.AddCommand(elementMetadataCmd)
+	elementsCmd.AddCommand(elementDocsCmd)
+	elementsCmd.AddCommand(elementInstancesCmd)
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub
