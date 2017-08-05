@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20170805 0.4.0
+
+* Initial version of adding and defining individual Resources - `resources list | define <name> | add <name> <json>`
+
 ## 20170719 0.3.0
 
 * Retry Formula Instance Execution via `executions retry <execution_id>`

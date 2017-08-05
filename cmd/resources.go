@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -55,7 +56,7 @@ var listResourcesCmd = &cobra.Command{
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
 
-		url := fmt.Sprintf("%s%s", base, "/common-resources")
+		url := fmt.Sprintf("%s%s", base, ce.CommonResourcesURI)
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		client := &http.Client{}
@@ -142,6 +143,200 @@ var listResourcesCmd = &cobra.Command{
 	},
 }
 
+var addResourceCmd = &cobra.Command{
+	Use:   "add <name> <filepath.json>",
+	Short: "add a common resource",
+	Long:  "Add a Common Resource to the platform, given a name and a json definition of that Common Resource",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 2 {
+			fmt.Println("must supply a Common Resource name and a filepath to a json definition")
+			os.Exit(1)
+		}
+
+		// read in file
+		filebytes, err := ioutil.ReadFile(args[1])
+		if err != nil {
+			fmt.Println("unable to read file", args[1], err.Error())
+			os.Exit(1)
+		}
+		// Check if can decode into formula struct
+		var cro ce.CommonResource
+		err = json.Unmarshal(filebytes, &cro)
+		if err != nil {
+			fmt.Println(args[1], "doesn't seem like a Common Resource Object")
+			os.Exit(1)
+		}
+
+		base := viper.Get(profile + ".base")
+		user := viper.Get(profile + ".user")
+		org := viper.Get(profile + ".org")
+
+		url := fmt.Sprintf("%s%s",
+			base,
+			fmt.Sprintf(ce.CommonResourceDefinitionsFormatURI, args[0]),
+		)
+		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+
+		client := &http.Client{}
+		req, err := http.NewRequest("POST", url, bytes.NewReader(filebytes))
+		if err != nil {
+			fmt.Println("Can't construct request", err.Error())
+			os.Exit(1)
+		}
+		req.Header.Add("Authorization", auth)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Cannot process response", err.Error())
+			os.Exit(1)
+		}
+		bodybytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		if showCurl {
+			curlcmd, _ := http2curl.GetCurlCommand(req)
+			log.Println(curlcmd)
+		}
+
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+
+		if resp.StatusCode != 200 {
+			fmt.Print(resp.Status)
+			if resp.StatusCode == 404 {
+				fmt.Printf("Unable to contact CE API, %s\n", url)
+				return
+			}
+			if resp.StatusCode == 409 {
+				var errorMessage struct {
+					RequestID string `json:"requestId"`
+					Message   string `json:"message"`
+				}
+				err := json.Unmarshal(bodybytes, &errorMessage)
+				if err != nil {
+					fmt.Printf("%s\n", bodybytes)
+					return
+				}
+				fmt.Printf("\n%s\nrequest: %s\n", errorMessage.Message, errorMessage.RequestID)
+				return
+			}
+			fmt.Println()
+		}
+
+		err = json.Unmarshal(bodybytes, &cro)
+		if err != nil {
+			fmt.Println("Unable to convert 200 reponse into a Common Resource Object")
+			os.Exit(1)
+		}
+
+		fmt.Printf("Added common object resource: %s\n", args[0])
+		fmt.Printf("Field levels: %s\n", cro.Level)
+		data := [][]string{}
+		for _, v := range cro.Fields {
+			data = append(data, []string{
+				v.Path,
+				v.Type,
+			})
+		}
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Path", "Type"})
+		table.SetBorder(false)
+		table.SetColWidth(40)
+		table.AppendBulk(data)
+		table.Render()
+
+	},
+}
+
+var defineResourceCmd = &cobra.Command{
+	Use:   "definition",
+	Short: "detailed definition of a resource",
+	Long:  "Display the definition a named common object resource",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		if len(args) < 1 {
+			fmt.Println("must supply a name of a Common Resource")
+			os.Exit(1)
+		}
+
+		if !viper.IsSet(profile + ".base") {
+			fmt.Println("Can't find info for profile", profile)
+			os.Exit(1)
+		}
+
+		base := viper.Get(profile + ".base")
+		user := viper.Get(profile + ".user")
+		org := viper.Get(profile + ".org")
+
+		url := fmt.Sprintf("%s%s",
+			base,
+			fmt.Sprintf(ce.CommonResourceDefinitionsFormatURI, args[0]),
+		)
+		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			fmt.Println("Can't construct request", err.Error())
+			os.Exit(1)
+		}
+		req.Header.Add("Authorization", auth)
+		req.Header.Add("Accept", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Cannot process response", err.Error())
+			os.Exit(1)
+		}
+		bodybytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		if showCurl {
+			curlcmd, _ := http2curl.GetCurlCommand(req)
+			log.Println(curlcmd)
+		}
+
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+
+		if resp.StatusCode != 200 {
+			fmt.Print(resp.Status)
+			if resp.StatusCode == 404 {
+				fmt.Printf("Unable to contact CE API, %s\n", url)
+				return
+			}
+			fmt.Println()
+		}
+
+		var cro ce.CommonResource
+		err = json.Unmarshal(bodybytes, &cro)
+		if err != nil {
+			fmt.Println("Unable to convert 200 reponse into a Common Resource Object")
+			os.Exit(1)
+		}
+
+		fmt.Printf("Common Resource Object: %s\n", args[0])
+		fmt.Printf("Field levels: %s\n", cro.Level)
+		data := [][]string{}
+		for _, v := range cro.Fields {
+			data = append(data, []string{
+				v.Path,
+				v.Type,
+			})
+		}
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Path", "Type"})
+		table.SetBorder(false)
+		table.SetColWidth(40)
+		table.AppendBulk(data)
+		table.Render()
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(resourcesCmd)
 
@@ -151,4 +346,6 @@ func init() {
 
 	resourcesCmd.AddCommand(listResourcesCmd)
 	listResourcesCmd.Flags().BoolVarP(&withInstances, "with-instances", "i", false, "show mapped instances")
+	resourcesCmd.AddCommand(defineResourceCmd)
+	resourcesCmd.AddCommand(addResourceCmd)
 }
