@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 20170806 0.4.1
+
+* clarification to help for `elements list --order` options
+* combining profile commands into one file, `profiles.go`
+* Elements OAI retrieval via ID or Key `elements docs <ID|key>`
+* Elements metadata retrieval via ID or Key `elements metadata <ID|key>` - formatted json output
+* Elements instance retrieval via ID or Key `elements instances [ID|key]` - optional ID/key, will do an `instances list` if no ID/key provided
+* Instances list `instances list` is available
+
 ## 20170805 0.4.0
 
 * Initial version of adding and defining individual Resources - `resources list | define <name> | add <name> <json>`
