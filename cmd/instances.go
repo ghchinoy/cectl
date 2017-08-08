@@ -16,7 +16,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/ghchinoy/cectl/ce"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +35,37 @@ var listInstancesCmd = &cobra.Command{
 	Short: "List Instances on Platform",
 	Long:  "List Element Instances on Platform",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Unimplemented: List available Instances")
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// Get elements
+		bodybytes, statuscode, curlcmd, err := ce.GetAllInstances(profilemap["base"], profilemap["auth"])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		// output
+		ce.OutputElementInstancesTable(bodybytes)
 	},
 }
 

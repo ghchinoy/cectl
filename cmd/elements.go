@@ -15,9 +15,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/ghchinoy/cectl/ce"
 	"github.com/spf13/cobra"
@@ -48,6 +50,9 @@ var listElementsCmd = &cobra.Command{
 		// Get elements
 		bodybytes, statuscode, curlcmd, err := ce.GetAllElements(profilemap["base"], profilemap["auth"])
 		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -57,8 +62,8 @@ var listElementsCmd = &cobra.Command{
 		}
 		// handle non 200
 		if statuscode != 200 {
-			fmt.Printf("HTTP Error: %v\n", statuscode)
-			// handle this nicely, show
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
 		}
 		// handle global options, json
 		if outputJSON {
@@ -72,11 +77,47 @@ var listElementsCmd = &cobra.Command{
 
 // elementDocsCmd represents the /elements/{id}/docs API
 var elementDocsCmd = &cobra.Command{
-	Use:   "docs",
+	Use:   "docs <id|key>",
 	Short: "Output the OAI Specification documentation for the Element",
 	Long:  `Outputs the JSON format of the OAI Specification for the indicated Element`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
 
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element OAI
+		bodybytes, statuscode, curlcmd, err := ce.GetElementOAI(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		fmt.Printf("%s", bodybytes)
 	},
 }
 
@@ -85,6 +126,58 @@ var elementInstancesCmd = &cobra.Command{
 	Short: "List the Instances of an Element",
 	Long:  `List the Instances associated with an Element`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			// list all instances
+			listInstancesCmd.Run(cmd, args)
+			return
+		}
+
+		// Get element instances
+		bodybytes, statuscode, curlcmd, err := ce.GetElementInstances(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+			var errmsg struct {
+				RequestID string `json:"requestId"`
+				Message   string `json:"message"`
+			}
+			if statuscode == 404 {
+				err := json.Unmarshal(bodybytes, &errmsg)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Printf("%s\nRequest ID: %s\n", errmsg.Message, errmsg.RequestID)
+				return
+			}
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		// output
+		err = ce.OutputElementInstancesTable(bodybytes)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 
 	},
 }
@@ -94,7 +187,51 @@ var elementMetadataCmd = &cobra.Command{
 	Short: "Display Metadata of an Element",
 	Long:  `Display Metadata of an Element`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
 
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element metadata
+		bodybytes, statuscode, curlcmd, err := ce.GetElementMetadata(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		var metadata interface{}
+		err = json.Unmarshal(bodybytes, &metadata)
+		if err != nil {
+			fmt.Println("Can't unmarshal")
+			os.Exit(1)
+		}
+		formattedbytes, err := json.MarshalIndent(metadata, "", "    ")
+		if err != nil {
+			fmt.Println("Can't format json")
+			os.Exit(1)
+		}
+		fmt.Printf("%s", formattedbytes)
 	},
 }
 
@@ -128,7 +265,7 @@ func init() {
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub
-	listElementsCmd.Flags().StringVarP(&orderBy, "order", "", "", "order element list")
+	listElementsCmd.Flags().StringVarP(&orderBy, "order", "", "", "order element (hub, name)")
 	// filter-by flag: Show only elements where filter is true
 	// --filter-by active|deleted|private|beta|cloneable|extendable
 	//listElementsCmd.Flags().StringVarP(&filterBy, "filter", "", "", "elements where filter is true")
