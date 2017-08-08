@@ -9,11 +9,13 @@ Usage:
   cectl [command]
 
 Available Commands:
+  elements          Manage Elements on the Platform
   executions        Manage Formula Instance Executions
   formula-instances Manage Formula Instances
   formulas          Manage formulas on the platform
   help              Help about any command
   hubs              Hub management
+  instances         Manage Instances of Elements on the Platform
   jobs              Manage jobs on the platform
   profiles          Manage profiles
   resources         Manage common resources
