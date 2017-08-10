@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -218,7 +219,7 @@ func FormulaDetailsTableOutput(f Formula) error {
 }
 
 // FormulaDetailsAsBytes returns Formula template details as bytes
-func FormulaDetailsAsBytes(formulaID, base, auth string) ([]byte, int, error) {
+func FormulaDetailsAsBytes(formulaID, base, auth string) ([]byte, int, string, error) {
 
 	var bodybytes []byte
 
@@ -231,20 +232,22 @@ func FormulaDetailsAsBytes(formulaID, base, auth string) ([]byte, int, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Can't construct request", err.Error())
-		os.Exit(1)
+		return bodybytes, -1, "", err
 	}
 	req.Header.Add("Authorization", auth)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+	curlCmd, _ := http2curl.GetCurlCommand(req)
+	curl := fmt.Sprintf("%s", curlCmd)
 	resp, err := client.Do(req)
 	if err != nil {
-		return bodybytes, resp.StatusCode, err
+		return bodybytes, resp.StatusCode, curl, err
 
 	}
 	bodybytes, err = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
-	return bodybytes, resp.StatusCode, nil
+	return bodybytes, resp.StatusCode, curl, nil
 
 }
 

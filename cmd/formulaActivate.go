@@ -17,6 +17,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -48,7 +49,7 @@ var formulaActivateCmd = &cobra.Command{
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		// Get the Formula
-		formulaResponseBytes, statuscode, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -69,6 +70,10 @@ var formulaActivateCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
 			os.Exit(1)
+		}
+
+		if showCurl {
+			log.Println(curlcmd)
 		}
 
 		if outputJSON {
@@ -95,7 +100,7 @@ var formulaActivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		formulaResponseBytes, statuscode, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)

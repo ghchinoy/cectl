@@ -18,10 +18,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/ghchinoy/cectl/ce"
+	"github.com/moul/http2curl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -68,6 +70,11 @@ var deleteFormulaCmd = &cobra.Command{
 		}
 		bodybytes, err := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
+
+		if showCurl {
+			curlcmd, _ := http2curl.GetCurlCommand(req)
+			log.Println(curlcmd)
+		}
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)

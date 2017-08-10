@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20170810 0.4.2 
+
+* Formula commands now honor `--curl` flag
+
 ## 20170806 0.4.1
 
 * clarification to help for `elements list --order` options

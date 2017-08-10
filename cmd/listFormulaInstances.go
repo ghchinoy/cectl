@@ -88,11 +88,12 @@ var listFormulaInstancesCmd = &cobra.Command{
 					v.Name,
 					strconv.FormatBool(v.Active),
 					fmt.Sprintf("%v %s", v.Formula.ID, v.Formula.Name),
+					v.CreatedDate.String(),
 				})
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"ID", "Instance", "active", "Formula"})
+			table.SetHeader([]string{"ID", "Instance", "active", "Formula", "Created"})
 			table.SetBorder(false)
 			table.AppendBulk(data)
 			table.Render()

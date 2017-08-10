@@ -17,6 +17,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/ghchinoy/cectl/ce"
@@ -47,10 +48,14 @@ var formulaDetailsCmd = &cobra.Command{
 
 		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
-		bodybytes, statuscode, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		bodybytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
 		if err != nil {
 			fmt.Println("unable to retrieve formula", err.Error())
 			os.Exit(1)
+		}
+
+		if showCurl {
+			log.Println(curlcmd)
 		}
 
 		if outputJSON {
