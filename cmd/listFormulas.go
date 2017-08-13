@@ -103,26 +103,32 @@ var listFormulasCmd = &cobra.Command{
 			}
 			instancecount = strconv.Itoa(len(instances))
 
-			api := "N/A"
-			if v.Triggers[0].Type == "manual" {
-				api = v.API
-			}
+			for _, t := range v.Triggers {
 
-			data = append(data, []string{
-				strconv.Itoa(v.ID),
-				v.Name,
-				strconv.FormatBool(v.Active),
-				strconv.Itoa(len(v.Steps)),
-				v.Triggers[0].Type,
-				instancecount,
-				api,
-			},
-			)
+				api := "N/A"
+				if v.Triggers[0].Type == "manual" {
+					api = v.API
+				}
+
+				data = append(data, []string{
+					strconv.Itoa(v.ID),
+					v.Name,
+					strconv.FormatBool(v.Active),
+					strconv.Itoa(len(v.Steps)),
+					instancecount,
+					t.Type,
+					strconv.Itoa(t.ID),
+					fmt.Sprintf("%s", t.OnSuccess),
+					api,
+				},
+				)
+			}
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Name", "active", "steps", "trigger", "instances", "api"})
+		table.SetHeader([]string{"ID", "Name", "active", "steps", "instances", "trigger", "id", "success", "api"})
 		table.SetBorder(false)
+		table.SetAutoMergeCells(true)
 		table.AppendBulk(data)
 		table.Render()
 	},
