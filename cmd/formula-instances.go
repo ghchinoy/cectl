@@ -30,5 +30,6 @@ func init() {
 
 	formulaInstancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	formulaInstancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
+	formulaInstancesCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
 
 }

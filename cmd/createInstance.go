@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"os"
@@ -25,17 +26,20 @@ import (
 	"encoding/json"
 
 	"github.com/ghchinoy/cectl/ce"
+	"github.com/moul/http2curl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var formulaInstance string
+var formulaInstanceConfiguration string
 
-// createInstanceCmd represents the createInstance command
+// createInstanceCmd is the command for creating a Formula Instance
 var createInstanceCmd = &cobra.Command{
 	Use:   "create <id> [name]",
 	Short: "creates an instance of a Formula, given a Formula ID",
-	Long:  `Given a Formula ID, create an Instance of the Formula`,
+	Long: `Given the ID of Formula template, create an Instance of the Formula
+Optionally, provide the Formula configuration definition via a flag.
+A name for the Formula Instance will be required when using a flag.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			fmt.Println("Please supply an ID of a Formula template\ncectl formula-instance create <ID> [name]")
@@ -57,12 +61,16 @@ var createInstanceCmd = &cobra.Command{
 
 		// if no instance config json given, check for name
 		var fi ce.FormulaInstanceConfig
-		if formulaInstance == "" {
+		if formulaInstanceConfiguration == "" {
 			if len(args) < 2 {
-				fmt.Println("Please provide a name if not submitting a Formula Instance configuration\ncectl formula-instance create <ID> [name]")
+				fmt.Println("Please provide a name for the Instance if not submitting a Formula Instance configuration definition\ncectl formula-instance create <ID> [name]")
 				os.Exit(1)
 			}
 			fi = ce.FormulaInstanceConfig{Name: args[1], Active: true}
+		} else {
+			var raw map[string]interface{}
+			_ = json.Unmarshal([]byte(formulaInstanceConfiguration), &raw)
+			fi = ce.FormulaInstanceConfig{Name: args[1], Active: true, Configuration: raw}
 		}
 
 		fibytes, err := json.Marshal(fi)
@@ -82,6 +90,8 @@ var createInstanceCmd = &cobra.Command{
 		req.Header.Add("Authorization", auth)
 		req.Header.Add("Accept", "application/json")
 		req.Header.Add("Content-Type", "application/json")
+		curlCmd, _ := http2curl.GetCurlCommand(req)
+		curl := fmt.Sprintf("%s", curlCmd)
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Cannot process response", err.Error())
@@ -89,6 +99,10 @@ var createInstanceCmd = &cobra.Command{
 		}
 		bodybytes, err := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
+
+		if showCurl {
+			log.Println(curl)
+		}
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
@@ -101,6 +115,8 @@ var createInstanceCmd = &cobra.Command{
 func init() {
 	formulaInstancesCmd.AddCommand(createInstanceCmd)
 
-	createInstanceCmd.Flags().StringVarP(&formulaInstance, "instance", "i", "", "instance configuration")
+	createInstanceCmd.Flags().StringVarP(&formulaInstanceConfiguration, "configuration", "", "", "instance configuration definition")
+	// deprecated
+	createInstanceCmd.Flags().StringVarP(&formulaInstanceConfiguration, "instance", "i", "", "instance configuration definition")
 
 }

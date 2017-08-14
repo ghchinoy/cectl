@@ -89,8 +89,9 @@ type FormulaInstance struct {
 
 // FormulaInstanceConfig represents a configuration used when creating an Instance of a Formula
 type FormulaInstanceConfig struct {
-	Name   string `json:"name"`
-	Active bool   `json:"active"`
+	Name          string      `json:"name"`
+	Active        bool        `json:"active"`
+	Configuration interface{} `json:"configuration,omitempty"`
 }
 
 // FormulaInstanceCreationResponse is the response returned when a Formula Instance is triggered
@@ -186,11 +187,9 @@ func FormulaDetailsTableOutput(f Formula) error {
 		table.AppendBulk(data)
 		table.Render()
 
-		fmt.Println()
-
 		// Steps
 
-		fmt.Println("Steps")
+		fmt.Println("\nSteps")
 
 		data = [][]string{}
 
@@ -209,6 +208,29 @@ func FormulaDetailsTableOutput(f Formula) error {
 		table.SetBorder(false)
 		table.AppendBulk(data)
 		table.Render()
+
+		// Configuration parameters
+		fmt.Println("\nConfiguration")
+
+		if len(f.Configuration) > 0 {
+			data = [][]string{}
+			for _, v := range f.Configuration {
+				data = append(data, []string{
+					strconv.Itoa(v.ID),
+					v.Name,
+					v.Key,
+					v.Type,
+					strconv.FormatBool(v.Required),
+				})
+			}
+			table = tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"ID", "Name", "Key", "Value", "Required"})
+			table.SetBorder(false)
+			table.AppendBulk(data)
+			table.Render()
+		} else {
+			fmt.Println("No configuration parameters needed.")
+		}
 
 		if f.API != "" {
 			fmt.Printf("\n%s -H 'Elements-Formula-Instance-Id: '\n", f.API)

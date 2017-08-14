@@ -3,6 +3,8 @@
 ## 20170810 0.4.2 
 
 * Formula commands now honor `--curl` flag
+* Formula Instances create command now takes a the configuration json with the `--configuration` flag, in addition deprecated`--instance`/`--i` flags
+* Users list via `users list`
 
 ## 20170806 0.4.1
 
