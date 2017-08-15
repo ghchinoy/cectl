@@ -182,6 +182,51 @@ var elementInstancesCmd = &cobra.Command{
 	},
 }
 
+var elementModelValidation = &cobra.Command{
+	Use:   "validate-models",
+	Short: "Validate the models of this Element",
+	Long: `Validates the models associated for this Element,
+primarily for use for internal housekeeping. Requires a model ID.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
+
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element model validation
+		bodybytes, statuscode, curlcmd, err := ce.GetElementModelValidation(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+
+		fmt.Printf("%s", bodybytes)
+	},
+}
+
+// elementMetadataCmd provides the metadata for the Element
 var elementMetadataCmd = &cobra.Command{
 	Use:   "metadata",
 	Short: "Display Metadata of an Element",
@@ -262,6 +307,7 @@ func init() {
 	elementsCmd.AddCommand(elementMetadataCmd)
 	elementsCmd.AddCommand(elementDocsCmd)
 	elementsCmd.AddCommand(elementInstancesCmd)
+	//elementsCmd.AddCommand(elementModelValidation)
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub

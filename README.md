@@ -19,6 +19,7 @@ Available Commands:
   jobs              Manage jobs on the platform
   profiles          Manage profiles
   resources         Manage common resources
+  users             Manage users on the platform
   version           version of cectl
 
 Flags:
