@@ -1,12 +1,17 @@
 # CHANGELOG
 
+## 20170823 0.4.4
+
+* Changed Formula Instance Exection list limit flag from `--num` to `--top` to make it clear that the return is from the latest
+* internal, consolidation of `execution` commands
+
 ## 20170817 0.4.3
 
 * Instance details added `instance details <instanceID>` returns details about an Instance including token
 * Instance docs added `instance docs <instanceID>` returns OAI Spec for Instance
 * Details for Instances of a Formula now provides configuration params for the Instance `formulas instances <formula_ID>`
 * Added "extendable" to `elements list` output
-* Added an optional key param to `elements list <keyfilter>`, which will return only the Elements with keys matching `keyfilter`
+* Added an optional key param to `elements list [keyfilter]`, which will return only the Elements with keys matching `keyfilter`
 
 ## 20170810 0.4.2 
 
