@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/ghchinoy/cectl/ce"
 	"github.com/spf13/cobra"
@@ -83,7 +84,146 @@ var instanceDocsCmd = &cobra.Command{
 	Short: "Output the OAI Specification documentation for the Element Instance",
 	Long:  `Outputs the JSON format of the OAI Specification for the indicated Element Instance`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Unimplemented: Given an Instance ID, return the OAI Specification documentation")
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
+
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element OAI
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceOAI(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		fmt.Printf("%s", bodybytes)
+	},
+}
+
+var instanceDetailsCmd = &cobra.Command{
+	Use:   "details",
+	Short: "Details about an Instance",
+	Long:  `Provides details about an Instance, given an Instance ID`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// check for Instance ID & Operation name
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID ")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+
+		// Get schema definition for operation
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceInfo(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		// output
+		//ce.OutputElementInstancesTable(bodybytes)
+		ce.OutputInstanceDetails(bodybytes)
+	},
+}
+
+var instanceOperationDefinitionCmd = &cobra.Command{
+	Use:   "operation",
+	Short: "Show operation schema definition",
+	Long: `Shows the schema definition for an operation.
+Provide an instance ID and an operation name to retrieve the
+associated schema.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// check for Instance ID & Operation name
+		if len(args) < 2 {
+			fmt.Println("Please provide an Instance ID and Operation name")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+
+		// Get schema definition for operation
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceOperationDefinition(profilemap["base"], profilemap["auth"], args[0], args[1])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		// output
+		ce.OutputElementInstancesTable(bodybytes)
 	},
 }
 
@@ -92,6 +232,7 @@ func init() {
 	instancesCmd.AddCommand(listInstancesCmd)
 	instancesCmd.AddCommand(listInstanceTransformationsCmd)
 	instancesCmd.AddCommand(instanceDocsCmd)
+	instancesCmd.AddCommand(instanceDetailsCmd)
 
 	instancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	instancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
