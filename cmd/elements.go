@@ -65,6 +65,14 @@ var listElementsCmd = &cobra.Command{
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
 		}
+		// optional element key filter
+		if args[0] != "" {
+			filteredElementsBytes, err := ce.FilterElementFromList(args[0], bodybytes)
+			if err != nil {
+				log.Printf("Unable to filter by '%s'- %s\n", args[0], err.Error())
+			}
+			bodybytes = filteredElementsBytes
+		}
 		// handle global options, json
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
