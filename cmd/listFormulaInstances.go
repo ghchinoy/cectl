@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/ghchinoy/cectl/ce"
 	"github.com/olekukonko/tablewriter"
@@ -83,17 +84,26 @@ var listFormulaInstancesCmd = &cobra.Command{
 			var instances []ce.FormulaInstance
 			err = json.Unmarshal(bodybytes, &instances)
 			for _, v := range instances {
+
+				var configs []string
+				if c, ok := v.Configuration.(map[string]interface{}); ok {
+					for k, v := range c {
+						configs = append(configs, fmt.Sprintf("%s:%s", k, v))
+					}
+				}
+
 				data = append(data, []string{
 					strconv.Itoa(v.ID),
 					v.Name,
 					strconv.FormatBool(v.Active),
 					fmt.Sprintf("%v %s", v.Formula.ID, v.Formula.Name),
+					strings.Join(configs, ", "),
 					v.CreatedDate.String(),
 				})
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"ID", "Instance", "active", "Formula", "Created"})
+			table.SetHeader([]string{"ID", "Instance", "active", "Formula", "Configuration", "Created"})
 			table.SetBorder(false)
 			table.AppendBulk(data)
 			table.Render()
