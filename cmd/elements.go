@@ -39,7 +39,8 @@ var elementsCmd = &cobra.Command{
 var listElementsCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Elements on the Platform",
-	Long:  `Retrieve all available Elements`,
+	Long: `Retrieve all available Elements;
+Optionally, add in a keyfilter to filter out Elements by key.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for profile
 		profilemap, err := getAuth(profile)
