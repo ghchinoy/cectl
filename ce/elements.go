@@ -42,15 +42,19 @@ type Element struct {
 	SignupURL                string                   `json:"signup_url,omitempty"`
 	DefaultTransformations   []InstanceTransformation `json:"default_transformations,omitempty"`
 	Configuration            []ElementConfiguration   `json:"configuration,omitempty"`
+	Resources                []ElementResources       `json:"resources,omitempty"`
+	Objects                  interface{}              `json:"objects,omitempty"`
 	TransformationsEnabled   bool                     `json:"transformationsEnabled,omitempty"`
 	BulkDownloadEnabled      bool                     `json:"bulkDownloadEnabled,omitempty"`
 	Cloneable                bool                     `json:"cloneable,omitempty"`
 	Extendable               bool                     `json:"extendable,omitempty"`
 	Beta                     bool                     `json:"beta,omitempty"`
 	Authentication           ElementAuthentication    `json:"authentication,omitempty"`
+	Hooks                    interface{}              `json:"hooks,omitempty"`
 	Extended                 bool                     `json:"extended,omitempty"`
 	Hub                      string                   `json:"hub,omitempty"`
 	ProtocolType             string                   `json:"protocolType,omitempty"`
+	Parameters               interface{}              `json:"parameters,omitempty"`
 	Private                  bool                     `json:"private,omitempty"`
 }
 
@@ -70,6 +74,24 @@ type ElementConfiguration struct {
 	Type            string `json:"type"`
 	HideFromConsole bool   `json:"hideFromConsole"`
 	Required        bool   `json:"required"`
+}
+
+// ElementResources represents an Element's resources
+type ElementResources struct {
+	ID             int         `json:"id,omitempty"`
+	CreatedDate    string      `json:"createdDate,omitempty"`
+	UpdatedDate    string      `json:"updateDate,omitempty"`
+	Description    string      `json:"description,omitempty"`
+	Path           string      `json:"path,omitempty"`
+	VendorPath     string      `json:"vendorPath,omitempty"`
+	Method         string      `json:"method,omitempty"`
+	VendorMethod   string      `json:"vendorMethod,omitempty"`
+	Parameters     interface{} `json:"parameters,omitempty"`
+	Type           string      `json:"type,omitempty"`
+	Hooks          []string    `json:"hooks,omitempty"`
+	Response       interface{} `json:"response,omitempty"`
+	PaginationType string      `json:"paginationType,omitempty"`
+	OwnerAccountID int         `json:"ownerAccountId,omitempty"`
 }
 
 // InstanceTransformation is a transformation for a field on an Element Instance
@@ -231,6 +253,33 @@ func GetElementOAI(base, auth, elementid string) ([]byte, int, string, error) {
 	url := fmt.Sprintf("%s%s",
 		base,
 		fmt.Sprintf(ElementsDocsFormatURI, elementid),
+	)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		// cant construct request
+		return bodybytes, -1, "", err
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accpet", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	curlCmd, _ := http2curl.GetCurlCommand(req)
+	curl := fmt.Sprintf("%s", curlCmd)
+	resp, err := client.Do(req)
+	if err != nil {
+		return bodybytes, -1, curl, err
+	}
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return bodybytes, resp.StatusCode, curl, nil
+}
+
+// GetExportElement returns the JSON of the Element
+func GetExportElement(base, auth, elementid string) ([]byte, int, string, error) {
+	var bodybytes []byte
+	url := fmt.Sprintf("%s%s",
+		base,
+		fmt.Sprintf(ElementFormatURI, elementid),
 	)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)

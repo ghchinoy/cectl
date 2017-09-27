@@ -67,7 +67,7 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 			// handle this nicely, show error description
 		}
 		// optional element key filter
-		if args[0] != "" {
+		if len(args) > 0 && args[0] != "" {
 			filteredElementsBytes, err := ce.FilterElementFromList(args[0], bodybytes)
 			if err != nil {
 				log.Printf("Unable to filter by '%s'- %s\n", args[0], err.Error())
@@ -235,6 +235,60 @@ primarily for use for internal housekeeping. Requires a model ID.`,
 	},
 }
 
+// elementExportCmd exports an Element given its id
+var elementExportCmd = &cobra.Command{
+	Use:   "export",
+	Short: "Export the Element JSON",
+	Long:  `Export an Element JSON given the ID of an Element`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
+
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element
+		bodybytes, statuscode, curlcmd, err := ce.GetExportElement(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		var element interface{}
+		err = json.Unmarshal(bodybytes, &element)
+		if err != nil {
+			fmt.Println("Can't unmarshal")
+			os.Exit(1)
+		}
+		formattedbytes, err := json.MarshalIndent(element, "", "    ")
+		if err != nil {
+			fmt.Println("Can't format json")
+			os.Exit(1)
+		}
+		fmt.Printf("%s", formattedbytes)
+	},
+}
+
 // elementMetadataCmd provides the metadata for the Element
 var elementMetadataCmd = &cobra.Command{
 	Use:   "metadata",
@@ -316,6 +370,7 @@ func init() {
 	elementsCmd.AddCommand(elementMetadataCmd)
 	elementsCmd.AddCommand(elementDocsCmd)
 	elementsCmd.AddCommand(elementInstancesCmd)
+	elementsCmd.AddCommand(elementExportCmd)
 	//elementsCmd.AddCommand(elementModelValidation)
 
 	// order-by flag: Order element list by
