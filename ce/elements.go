@@ -417,6 +417,27 @@ func OutputElementInstancesTable(instancesbytes []byte) error {
 	return nil
 }
 
+// FilterCustomElements returns only the custom elements
+func FilterCustomElements(elementsbytes []byte) ([]byte, error) {
+	var elements Elements
+	err := json.Unmarshal(elementsbytes, &elements)
+	if err != nil {
+		fmt.Println(err.Error())
+		return elementsbytes, err
+	}
+	var filteredElements Elements
+	for _, v := range elements {
+		if v.Private == true {
+			filteredElements = append(filteredElements, v)
+		}
+	}
+	elementsbytes, err = json.Marshal(filteredElements)
+	if err != nil {
+		return elementsbytes, err
+	}
+	return elementsbytes, nil
+}
+
 // FilterElementFromList returns an array of Elements whose key matches the input
 func FilterElementFromList(keyfilter string, elementsbytes []byte) ([]byte, error) {
 	var elements Elements
@@ -461,13 +482,14 @@ func OutputElementsTable(elementsbytes []byte, orderBy string, filterBy string) 
 			v.Name,
 			v.Hub,
 			configcount,
+			strconv.FormatBool(v.Private),
 			strconv.FormatBool(v.Active),
 			strconv.FormatBool(v.Extendable),
 		})
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"ID", "Key", "Name", "Hub", "Configs", "Active", "Extendable"})
+	table.SetHeader([]string{"ID", "Key", "Name", "Hub", "Configs", "Private", "Active", "Extendable"})
 	table.SetBorder(false)
 	table.AppendBulk(data)
 	table.Render()
