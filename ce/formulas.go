@@ -303,3 +303,82 @@ func FormulaUpdate(formulaID, base, auth string, formula Formula) ([]byte, int, 
 
 	return bodybytes, resp.StatusCode, nil
 }
+
+// FormulasList retruns a list of formulas
+func FormulasList(base, auth string) ([]byte, int, string, error) {
+	var bodybytes []byte
+	url := fmt.Sprintf("%s%s", base, FormulasURI)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		// cant construct request
+		return bodybytes, -1, "", err
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accpet", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	curlCmd, _ := http2curl.GetCurlCommand(req)
+	curl := fmt.Sprintf("%s", curlCmd)
+	resp, err := client.Do(req)
+	if err != nil {
+		return bodybytes, resp.StatusCode, curl, err
+	}
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return bodybytes, resp.StatusCode, curl, nil
+}
+
+// OutputFormulasList writes a nice table of formulas to stdout
+func OutputFormulasList(formulabytes []byte, base, auth string) error {
+	data := [][]string{}
+
+	var formulas []Formula
+	err := json.Unmarshal(formulabytes, &formulas)
+	if err != nil {
+		return err
+	}
+	for _, v := range formulas {
+		if len(v.Triggers) < 1 {
+			fmt.Printf("Formula %v is malformed, no trigger present\n", v.ID)
+			break
+		}
+
+		var instancecount string
+		instances, err := GetInstancesOfFormula(v.ID, base, auth)
+		if err != nil {
+			// unable to retrieve instances of formula!
+			instancecount = "N/A"
+		}
+		instancecount = strconv.Itoa(len(instances))
+
+		for _, t := range v.Triggers {
+
+			api := "N/A"
+			if v.Triggers[0].Type == "manual" {
+				api = v.API
+			}
+
+			data = append(data, []string{
+				strconv.Itoa(v.ID),
+				v.Name,
+				strconv.FormatBool(v.Active),
+				strconv.Itoa(len(v.Steps)),
+				instancecount,
+				t.Type,
+				strconv.Itoa(t.ID),
+				fmt.Sprintf("%s", t.OnSuccess),
+				api,
+			},
+			)
+		}
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"ID", "Name", "active", "steps", "instances", "trigger", "id", "success", "api"})
+	table.SetBorder(false)
+	table.SetAutoMergeCells(true)
+	table.AppendBulk(data)
+	table.Render()
+
+	return nil
+}

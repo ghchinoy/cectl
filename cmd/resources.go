@@ -22,8 +22,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/ghchinoy/cectl/ce"
 	"github.com/moul/http2curl"
@@ -47,98 +45,87 @@ var listResourcesCmd = &cobra.Command{
 	Short: "lists common object resources",
 	Long:  `lists common object resources`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s", base, ce.CommonResourcesURI)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
+		// check for profile
+		profilemap, err := getAuth(profile)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		resp, err := client.Do(req)
+		bodybytes, statuscode, curlcmd, err := ce.ResourcesList(profilemap["base"], profilemap["auth"])
 		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-
+		// handle global options, curl
 		if showCurl {
-			curlcmd, _ := http2curl.GetCurlCommand(req)
 			log.Println(curlcmd)
 		}
-
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
+		err = ce.OutputResourcesList(bodybytes)
+		if err != nil {
+			fmt.Println("Unable to render resources", err.Error())
+		}
+		/*
 
-		if resp.StatusCode != 200 {
-			fmt.Print(resp.Status)
-			if resp.StatusCode == 404 {
-				fmt.Printf("Unable to contact CE API, %s\n", url)
+			if !viper.IsSet(profile + ".base") {
+				fmt.Println("Can't find info for profile", profile)
+				os.Exit(1)
+			}
+
+			base := viper.Get(profile + ".base")
+			user := viper.Get(profile + ".user")
+			org := viper.Get(profile + ".org")
+
+			url := fmt.Sprintf("%s%s", base, ce.CommonResourcesURI)
+			auth := fmt.Sprintf("User %s, Organization %s", user, org)
+
+			client := &http.Client{}
+			req, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				fmt.Println("Can't construct request", err.Error())
+				os.Exit(1)
+			}
+			req.Header.Add("Authorization", auth)
+			req.Header.Add("Accept", "application/json")
+			resp, err := client.Do(req)
+			if err != nil {
+				fmt.Println("Cannot process response", err.Error())
+				os.Exit(1)
+			}
+			bodybytes, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+
+			if showCurl {
+				curlcmd, _ := http2curl.GetCurlCommand(req)
+				log.Println(curlcmd)
+			}
+
+			if outputJSON {
+				fmt.Printf("%s\n", bodybytes)
 				return
 			}
-			fmt.Println()
-		}
 
-		data := [][]string{}
-
-		var commonResources []ce.CommonResource
-		err = json.Unmarshal(bodybytes, &commonResources)
-		if err != nil {
-			fmt.Printf("Response not a list of Common Resources, %s", err.Error())
-			return
-		}
-
-		for _, v := range commonResources {
-
-			var fieldList string
-			if len(v.Fields) > 0 {
-				var fields []string
-				for _, f := range v.Fields {
-					fields = append(fields, f.Path)
+			if resp.StatusCode != 200 {
+				fmt.Print(resp.Status)
+				if resp.StatusCode == 404 {
+					fmt.Printf("Unable to contact CE API, %s\n", url)
+					return
 				}
-				fieldList = strings.Join(fields[:], ", ")
-				fieldList = " [" + fieldList + "]"
+				fmt.Println()
 			}
-
-			var instanceList string
-			if len(v.ElementInstanceIDs) > 0 {
-				var ids []string
-				for _, i := range v.ElementInstanceIDs {
-					ids = append(ids, strconv.Itoa(i))
-				}
-				instanceList = strings.Join(ids[:], ", ")
-				instanceList = " [" + instanceList + "]"
-			}
-
-			data = append(data, []string{
-				v.Name,
-				strconv.Itoa(len(v.ElementInstanceIDs)) + instanceList,
-				strconv.Itoa(len(v.Fields)),
-				fieldList,
-			})
-		}
-
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Name", "Mapped Instances", "#", "Fields"})
-		table.SetBorder(false)
-		table.SetColWidth(40)
-		table.AppendBulk(data)
-		table.Render()
+		*/
 
 	},
 }
