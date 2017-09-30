@@ -1,9 +1,19 @@
 # CHANGELOG
 
+
+## 20170930 0.4.6
+
+* rudimentary info command
+
+## 20170926 0.4.5
+
+* added `elements export` to export full element model
+
 ## 20170823 0.4.4
 
 * Changed Formula Instance Exection list limit flag from `--num` to `--top` to make it clear that the return is from the latest
 * internal, consolidation of `execution` commands
+* `instances docs [id]` requires an integer ID for the Element Instance ID
 
 ## 20170817 0.4.3
 
