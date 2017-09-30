@@ -15,6 +15,7 @@ Available Commands:
   formulas          Manage formulas on the platform
   help              Help about any command
   hubs              Hub management
+  info              Information about this account
   instances         Manage Instances of Elements on the Platform
   jobs              Manage jobs on the platform
   profiles          Manage profiles
