@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -33,17 +34,18 @@ const (
 
 // Formula represents the structure of a CE Formula
 type Formula struct {
-	ID             int             `json:"id"`
-	Name           string          `json:"name"`
-	UserID         int             `json:"userId"`
-	AccountID      int             `json:"accountId"`
-	CreatedDate    time.Time       `json:"createdDate"`
-	Steps          []Step          `json:"steps"`
-	Triggers       []Trigger       `json:"triggers"`
-	Active         bool            `json:"active"`
-	SingleThreaded bool            `json:"singleThreaded"`
-	Configuration  []Configuration `json:"configuration"`
-	API            string          `json:"api"`
+	ID             int               `json:"id"`
+	Name           string            `json:"name"`
+	UserID         int               `json:"userId"`
+	AccountID      int               `json:"accountId"`
+	CreatedDate    time.Time         `json:"createdDate"`
+	Steps          []Step            `json:"steps"`
+	Triggers       []Trigger         `json:"triggers"`
+	Active         bool              `json:"active"`
+	SingleThreaded bool              `json:"singleThreaded"`
+	Configuration  []Configuration   `json:"configuration"`
+	API            string            `json:"api"`
+	Instances      []FormulaInstance `json:"instances,omitempty"`
 }
 
 // Step represents a Formula step
@@ -326,6 +328,30 @@ func FormulasList(base, auth string) ([]byte, int, string, error) {
 	bodybytes, err = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return bodybytes, resp.StatusCode, curl, nil
+}
+
+// CombinedFormulaAndInstances returns a list of Formulas with Instances
+func CombinedFormulaAndInstances(formulabytes []byte, base, auth string) ([]Formula, error) {
+	var formulas []Formula
+	err := json.Unmarshal(formulabytes, &formulas)
+	if err != nil {
+		return formulas, err
+	}
+	for i, v := range formulas {
+		if len(v.Triggers) < 1 {
+			log.Printf("Formula %v is malformed, no trigger present\n", v.ID)
+			break
+		}
+		instances, err := GetInstancesOfFormula(v.ID, base, auth)
+		if err != nil {
+			break
+		}
+		// note use of index here, since range makes a copy of slice
+		// https://golang.org/ref/spec#RangeClause
+		formulas[i].Instances = instances
+	}
+
+	return formulas, nil
 }
 
 // OutputFormulasList writes a nice table of formulas to stdout
