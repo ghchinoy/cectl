@@ -37,6 +37,13 @@ var infoCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		all := false
+		if len(args) > 0 {
+			if args[0] == "all" {
+				all = true
+			}
+		}
+
 		var allCurlCommands []string
 
 		// List formulas
@@ -49,10 +56,20 @@ var infoCmd = &cobra.Command{
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
 		}
-		fmt.Println("Formulas")
-		err = ce.OutputFormulasList(bodybytes, profilemap["base"], profilemap["auth"])
+
+		formulas, err := ce.CombinedFormulaAndInstances(bodybytes, profilemap["base"], profilemap["auth"])
 		if err != nil {
-			fmt.Println("Unable to render formula table", err.Error())
+			fmt.Println("Unable to obtain instances for formulas", err.Error())
+		}
+		fmt.Printf("Formulas: %v\n", len(formulas))
+		for _, v := range formulas {
+			fmt.Printf("%6v %2v %s\n", v.ID, len(v.Instances), v.Name)
+		}
+		if all {
+			err = ce.OutputFormulasList(bodybytes, profilemap["base"], profilemap["auth"])
+			if err != nil {
+				fmt.Println("Unable to render formula table", err.Error())
+			}
 		}
 
 		// List Custom Elements
@@ -77,7 +94,9 @@ var infoCmd = &cobra.Command{
 		}
 		fmt.Println()
 		fmt.Printf("Custom Elements: %v\n", len(customElements))
-		ce.OutputElementsTable(customElementsOnly, "", "")
+		if len(customElements) > 0 {
+			ce.OutputElementsTable(customElementsOnly, "", "")
+		}
 
 		// List Instances
 		bodybytes, statuscode, curlcmd, err = ce.GetAllInstances(profilemap["base"], profilemap["auth"])
@@ -94,8 +113,15 @@ var infoCmd = &cobra.Command{
 			// handle this nicely, show error description
 		}
 		fmt.Println()
-		fmt.Println("Element Instances")
-		ce.OutputElementInstancesTable(bodybytes)
+		var instances []ce.ElementInstance
+		err = json.Unmarshal(bodybytes, &instances)
+		if err != nil {
+			fmt.Println("Unable to read Element instances")
+		}
+		fmt.Printf("Element Instances: %v\n", len(instances))
+		for _, v := range instances {
+			fmt.Printf("%7v %14s %s\n", v.ID, v.Element.Key, v.Name)
+		}
 
 		// List Common Resource Objects
 
