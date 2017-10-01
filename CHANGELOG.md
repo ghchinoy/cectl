@@ -1,6 +1,10 @@
 # CHANGELOG
 
 
+## 20171001 0.4.6.1
+
+* minor changes to info output
+
 ## 20170930 0.4.6
 
 * rudimentary info command
