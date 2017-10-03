@@ -319,14 +319,21 @@ func FormulasList(base, auth string) ([]byte, int, string, error) {
 	req.Header.Add("Authorization", auth)
 	req.Header.Add("Accpet", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	curlCmd, _ := http2curl.GetCurlCommand(req)
+	curlCmd, err := http2curl.GetCurlCommand(req)
+	if err != nil {
+		return bodybytes, -1, "", err
+	}
 	curl := fmt.Sprintf("%s", curlCmd)
 	resp, err := client.Do(req)
 	if err != nil {
+		return bodybytes, -1, curl, err
+	}
+	defer resp.Body.Close()
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return bodybytes, resp.StatusCode, curl, err
 	}
-	bodybytes, err = ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+
 	return bodybytes, resp.StatusCode, curl, nil
 }
 
