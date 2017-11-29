@@ -1,9 +1,11 @@
 package ce
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -493,4 +495,46 @@ func OutputElementsTable(elementsbytes []byte, orderBy string, filterBy string) 
 	table.SetBorder(false)
 	table.AppendBulk(data)
 	table.Render()
+}
+
+// OutputElementsTableAsCSV writes out a csv view of the elements list
+func OutputElementsTableAsCSV(elementsbytes []byte, orderBy string, filterBy string) {
+	var elements Elements
+	err := json.Unmarshal(elementsbytes, &elements)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	sort.Sort(elements)
+	if orderBy == "name" {
+		sort.Sort(ByName(elements))
+	} else if orderBy == "hub" {
+		sort.Sort(ByHub(elements))
+	}
+	data := [][]string{}
+	for _, v := range elements {
+		configcount := strconv.Itoa(len(v.Configuration))
+		data = append(data, []string{
+			strconv.Itoa(v.ID),
+			v.Key,
+			v.Name,
+			v.Hub,
+			configcount,
+			strconv.FormatBool(v.Private),
+			strconv.FormatBool(v.Active),
+			strconv.FormatBool(v.Extendable),
+		})
+	}
+
+	w := csv.NewWriter(os.Stdout)
+	for _, record := range data {
+		if err := w.Write(record); err != nil {
+			log.Fatalln("error writing record to csv:", err)
+		}
+	}
+	w.Flush()
+	if err := w.Error(); err != nil {
+		log.Fatal(err)
+	}
+
 }
