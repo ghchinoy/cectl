@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 20171128 0.4.7
+
+* `elements list` now has `--csv` csv output flag
 
 ## 20171001 0.4.6.1
 
