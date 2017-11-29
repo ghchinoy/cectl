@@ -93,6 +93,7 @@ func initConfig() {
 		cfgFile = viper.ConfigFileUsed()
 	} else {
 		fmt.Println("Could not find a", cfgHelp)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }

@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -42,7 +44,7 @@ var listInstancesCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		// Get elements
+		// Get instances
 		bodybytes, statuscode, curlcmd, err := ce.GetAllInstances(profilemap["base"], profilemap["auth"])
 		if err != nil {
 			if statuscode == -1 {
@@ -80,7 +82,7 @@ var listInstanceTransformationsCmd = &cobra.Command{
 }
 
 var instanceDocsCmd = &cobra.Command{
-	Use:   "docs",
+	Use:   "docs [ID]",
 	Short: "Output the OAI Specification documentation for the Element Instance",
 	Long:  `Outputs the JSON format of the OAI Specification for the indicated Element Instance`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -92,18 +94,18 @@ var instanceDocsCmd = &cobra.Command{
 		}
 		// check for Element ID
 		if len(args) < 1 {
-			fmt.Println("Please provide an Element ID or Element Key")
+			fmt.Println("Please provide an Element Instance ID")
 			return
 		}
 
-		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		instanceid, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("Element ID must be an integer")
 			return
 		}
 
 		// Get element OAI
-		bodybytes, statuscode, curlcmd, err := ce.GetInstanceOAI(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceOAI(profilemap["base"], profilemap["auth"], strconv.Itoa(instanceid))
 		if err != nil {
 			if statuscode == -1 {
 				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
@@ -175,8 +177,64 @@ var instanceDetailsCmd = &cobra.Command{
 	},
 }
 
+var instanceDefinitionsCmd = &cobra.Command{
+	Use:   "definitions",
+	Short: "Show all definitions for this Instance",
+	Long: `Retrieve all of the object definitions within a specific instance. 
+If no object definitions exist, then this will result in an error response.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// check for Instance ID & Operation name
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+
+		// Get schema definition for operation
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceObjectDefinitions(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		//if outputJSON {
+		var pretty bytes.Buffer
+		err = json.Indent(&pretty, bodybytes, "", "  ")
+		if err != nil {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		fmt.Printf("%s\n", pretty.Bytes())
+
+		//	return
+		//}
+	},
+}
+
 var instanceOperationDefinitionCmd = &cobra.Command{
-	Use:   "operation",
+	Use:   "operation [ID] [operationName]",
 	Short: "Show operation schema definition",
 	Long: `Shows the schema definition for an operation.
 Provide an instance ID and an operation name to retrieve the
@@ -218,12 +276,22 @@ associated schema.`,
 			// handle this nicely, show error description
 		}
 		// handle global options, json
-		if outputJSON {
+		/*
+			if outputJSON {
+				fmt.Printf("%s\n", bodybytes)
+				return
+			}
+
+			// output
+			ce.OutputElementInstancesTable(bodybytes)
+		*/
+		var pretty bytes.Buffer
+		err = json.Indent(&pretty, bodybytes, "", "  ")
+		if err != nil {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
-		// output
-		ce.OutputElementInstancesTable(bodybytes)
+		fmt.Printf("%s\n", pretty.Bytes())
 	},
 }
 
@@ -233,6 +301,8 @@ func init() {
 	instancesCmd.AddCommand(listInstanceTransformationsCmd)
 	instancesCmd.AddCommand(instanceDocsCmd)
 	instancesCmd.AddCommand(instanceDetailsCmd)
+	instancesCmd.AddCommand(instanceOperationDefinitionCmd)
+	instancesCmd.AddCommand(instanceDefinitionsCmd)
 
 	instancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	instancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")

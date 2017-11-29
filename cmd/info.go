@@ -124,7 +124,6 @@ var infoCmd = &cobra.Command{
 		}
 
 		// List Common Resource Objects
-
 		bodybytes, statuscode, curlcmd, err = ce.ResourcesList(profilemap["base"], profilemap["auth"])
 		if err != nil {
 			if statuscode == -1 {
@@ -134,11 +133,19 @@ var infoCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		allCurlCommands = append(allCurlCommands, curlcmd)
-		fmt.Println()
-		fmt.Println("Common Resource Objects")
-		err = ce.OutputResourcesList(bodybytes)
+		var commonResources []ce.CommonResource
+		err = json.Unmarshal(bodybytes, &commonResources)
 		if err != nil {
-			fmt.Println("Unable to render resources", err.Error())
+			fmt.Println("Can't create Objects list", statuscode)
+			return
+		}
+		fmt.Println()
+		fmt.Printf("Common Resource Objects: %v\n", len(commonResources))
+		if len(commonResources) > 0 {
+			err = ce.OutputResourcesList(bodybytes)
+			if err != nil {
+				fmt.Println("Unable to render resources", err.Error())
+			}
 		}
 
 		// List Users
