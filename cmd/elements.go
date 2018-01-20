@@ -75,6 +75,11 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 			bodybytes = filteredElementsBytes
 		}
 		// handle global options, json
+		if outputCSV {
+			ce.OutputElementsTableAsCSV(bodybytes, orderBy, filterBy)
+			fmt.Println()
+			return
+		}
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
@@ -365,6 +370,7 @@ func init() {
 	elementsCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	elementsCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	elementsCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
+	elementsCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 
 	elementsCmd.AddCommand(listElementsCmd)
 	elementsCmd.AddCommand(elementMetadataCmd)
@@ -378,6 +384,7 @@ func init() {
 	listElementsCmd.Flags().StringVarP(&orderBy, "order", "", "", "order element (hub, name)")
 	// filter-by flag: Show only elements where filter is true
 	// --filter-by active|deleted|private|beta|cloneable|extendable
+	// TODO this isn't implemented in ce.elements#OutputElementsTable
 	//listElementsCmd.Flags().StringVarP(&filterBy, "filter", "", "", "elements where filter is true")
 
 }

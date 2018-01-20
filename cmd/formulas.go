@@ -45,6 +45,10 @@ var listFormulasCmd = &cobra.Command{
 		}
 
 		bodybytes, statuscode, curlcmd, err := ce.FormulasList(profilemap["base"], profilemap["auth"])
+		if err != nil {
+			fmt.Println("Unable to list formulas", err.Error())
+			os.Exit(1)
+		}
 
 		// handle global options, curl
 		if showCurl {

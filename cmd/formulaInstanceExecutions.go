@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -61,6 +62,20 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 		base := viper.Get(profile + ".base")
 		user := viper.Get(profile + ".user")
 		org := viper.Get(profile + ".org")
+
+		// add eventId and/or objectId query params as needed
+		// if formulaExecutionQueryObjectID | formulaExecutionQueryEventID > 0
+		var query []string
+
+		if formulaExecutionQueryEventID > 0 {
+			query = append(query, fmt.Sprintf("eventId=%v", formulaExecutionQueryEventID))
+		}
+		if formulaExecutionQueryObjectID > 0 {
+			query = append(query, fmt.Sprintf("objectId=%v", formulaExecutionQueryObjectID))
+		}
+		if len(query) > 0 {
+
+		}
 
 		url := fmt.Sprintf("%s%s",
 			base,
@@ -261,6 +276,57 @@ var retryFormulaInstanceExecutionCmd = &cobra.Command{
 	},
 }
 
+// detailExecutionIDCmd results in the specific execution details
+var detailExecutionIDCmd = &cobra.Command{
+	Use:   "details <id>",
+	Short: "Show details of a Formula Instance Execution by ID",
+	Long:  `Given an Execution ID, show details of each of the steps in a the Formula Instance Execution`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// guard
+		if len(args) < 1 {
+			fmt.Println("must supply an ID of a Formula Instance Execution")
+			os.Exit(1)
+		}
+
+		// guard
+		_, err = strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Println("Please provide a number as a Formula Execution ID")
+			os.Exit(1)
+		}
+
+		bodybytes, statuscode, curlcmd, err := ce.GetFormulaInstanceExecutionID(args[0], profilemap["base"], profilemap["auth"])
+		if err != nil {
+			fmt.Println("Unable to get formula execution id", err.Error())
+			os.Exit(1)
+		}
+
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(formulaInstanceExecutionsCmd)
 	formulaInstanceExecutionsCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
@@ -274,4 +340,6 @@ func init() {
 	formulaInstanceExecutionsCmd.AddCommand(cancelExecutionCmd)
 
 	formulaInstanceExecutionsCmd.AddCommand(retryFormulaInstanceExecutionCmd)
+
+	formulaInstanceExecutionsCmd.AddCommand(detailExecutionIDCmd)
 }

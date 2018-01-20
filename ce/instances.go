@@ -27,11 +27,11 @@ const (
 	InstanceTransformationsFormatURI     = "/instances/%s/transformations"
 	InstanceDocFormatURI                 = "/instances/%s/docs"
 
-	InstanceOperationOAI_ID              = "/instances/%s/docs/%s"
-	InstanceDefinitions_ID               = "/instances/%s/objects/definitions"
-	InstanceDefinitionsByOperation_ID    = "/instances/%s/docs/%s/definitions"
-	InstanceDefinitions_Token            = "/instances/objects/definitions"
-	InstanceDefinitionsByOperation_Token = "/instances/docs/%s/definitions"
+	InstanceDefinitions_ID       = "/instances/%s/objects/definitions"
+	InstanceDefinitions_Token    = "/instances/objects/definitions"
+	InstanceOperationOAI_ID      = "/instances/%s/docs/%s"
+	InstanceOAIByOperation_ID    = "/instances/%s/docs/%s/definitions"
+	InstanceOAIByOperation_Token = "/instances/docs/%s/definitions"
 )
 
 // Instance represents an Element Instance
@@ -142,7 +142,39 @@ func GetInstanceOAI(base, auth, instanceID string) ([]byte, int, string, error) 
 	return bodybytes, resp.StatusCode, curl, nil
 }
 
+// GetInstanceTransformations is incomplete
 func GetInstanceTransformations(id string) {}
+
+// GetInstanceObjectDefinitions returns the schema definitions for an Instance
+func GetInstanceObjectDefinitions(base, auth, instanceID string) ([]byte, int, string, error) {
+	var bodybytes []byte
+
+	url := fmt.Sprintf("%s%s",
+		base,
+		fmt.Sprintf(InstanceDefinitions_ID, instanceID),
+	)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Can't construct request", err.Error())
+		os.Exit(1)
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	curlCmd, _ := http2curl.GetCurlCommand(req)
+	curl := fmt.Sprintf("%s", curlCmd)
+	resp, err := client.Do(req)
+	if err != nil {
+		// unable to reach CE API
+		return bodybytes, -1, curl, err
+	}
+	bodybytes, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	return bodybytes, resp.StatusCode, curl, nil
+}
 
 // GetInstanceOperationDefinition returns the bytes of a call to get Instance schema definitions
 func GetInstanceOperationDefinition(base, auth, instanceID, operationName string) ([]byte, int, string, error) {
@@ -150,7 +182,7 @@ func GetInstanceOperationDefinition(base, auth, instanceID, operationName string
 
 	url := fmt.Sprintf("%s%s",
 		base,
-		fmt.Sprintf(InstanceDefinitionsByOperation_Token, operationName),
+		fmt.Sprintf(InstanceOAIByOperation_ID, instanceID, operationName),
 	)
 
 	client := &http.Client{}
