@@ -1,0 +1,59 @@
+#!/bin/bash
+# Use cectl to export all Formulas and Common Resource Objects.
+# This will create folders called "formulas" and "resources"
+# in the current directory.
+#
+# USAGE
+# # using default profile
+# ./export_all
+# or
+# # with a profile
+# ./export_all achievers-poc
+
+## Determine if profile exists, if not use "default" as the profile
+PROFILE=${1:-default}
+PROFILE_FLAG="--profile ${PROFILE}"
+
+## Export Functions
+
+export_formulas()
+{
+## Formulas
+# get a list of formulas
+FORMULAS=(`cectl formulas list --json ${PROFILE_FLAG} | jq '.[] | .id ' | jq ".|@sh" -s -r`)
+# get a list of formula names
+FORMULA_NAMES=(`cectl formulas list --json ${PROFILE_FLAG} | jq '.[] | .name | gsub(" ";"_")' | jq -sjr '.|@sh'`)
+
+mkdir -p formulas
+for i in "${!FORMULAS[@]}"; do
+    f="${FORMULAS[$i]}"
+    fn="${FORMULA_NAMES[$i]}"
+    # formula name has single quotes around it, regex those out
+    exportfile="formulas/${fn//"'"/}.formula.json"
+    cmd="cectl formulas details ${f} --json ${PROFILE_FLAG}"
+    echo `${cmd}` > ${exportfile}
+done
+
+echo "Created ./formulas with ${#FORMULAS[@]} formulas"
+}
+
+export_resources()
+{
+## Resources / Virtual Data Objects / Common Resource Objects
+CROS=(`cectl resources list --json ${PROFILE_FLAG} | jq '.[] | .name | gsub(" ";"_")' | jq -sjr '.|@sh'`)
+
+mkdir -p resources
+for i in "${!CROS[@]}"; do
+    cro=${CROS[$i]//"'"/}
+    cmd="cectl resources definition ${cro} --json ${PROFILE_FLAG}"
+    echo `${cmd}` > "resources/${cro}.cro.json"
+done
+
+echo "Created ./resources with ${#CROS[@]} cros"
+}
+
+## Execute Functions
+
+echo "Exporting all ..."
+export_formulas
+export_resources
