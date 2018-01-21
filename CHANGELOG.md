@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20180121 0.4.8
+
+* introduced `instances test` which hits the `/ping` endpoint for each Instance and reports non-200
+
 ## 20180120 0.4.7.1
 
 * using [ce-go](https://github.com/ghchinoy/ce-go) library

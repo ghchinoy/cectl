@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	version     = "0.4.7.1"
+	version     = "0.4.8"
 	versionName = "stratus"
 )
 
