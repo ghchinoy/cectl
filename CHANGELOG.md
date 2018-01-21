@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20180120 0.4.7.1
+
+* using [ce-go](https://github.com/ghchinoy/ce-go) library
+
 ## 20171128 0.4.7
 
 * `elements list` now has `--csv` csv output flag
