@@ -18,7 +18,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -60,10 +62,68 @@ var testInstancesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// start a thread to check each Instance, aggregating to "results" channel
+		results := make(chan PingCheck)
+
 		for _, i := range instances {
-			fmt.Printf("%s %s\n", profilemap["base"], i.Token)
+			pingurl := fmt.Sprintf("%s/hubs/%s/ping", profilemap["base"], i.Element.Hub)
+			ceauthtoken := fmt.Sprintf("%s, Element %s", profilemap["auth"], i.Token)
+			// start a goroutine to /ping Instance
+			go pingInstance(i.Element.Name, i.Name, pingurl, ceauthtoken, results)
+		}
+
+		// as results come in, print out if necessary
+		var num int // keep track of how many have come in
+		fmt.Printf("Checking %v instances\n", len(instances))
+		for i := range results {
+			if i.StatusCode != 200 {
+				fmt.Printf("%s (%s) %s\n", i.ElementName, i.InstanceName, i.Status)
+			}
+			num++
+			// if all expected results are in, close out the channel
+			if len(instances) == num {
+				close(results)
+			}
 		}
 	},
+}
+
+// PingCheck is a struct to hold results of a /ping check on an Element Instance
+type PingCheck struct {
+	ElementName  string
+	InstanceName string
+	StatusCode   int
+	Status       string
+	Message      []byte
+}
+
+// pingInstance makes an HTTP call to the Instances /ping endpoint
+func pingInstance(elementName, instanceName, url, auth string, checks chan PingCheck) (PingCheck, error) {
+
+	var c PingCheck
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Can't construct request", err.Error())
+		os.Exit(1)
+	}
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		// unable to reach CE API
+		checks <- c
+		return c, err
+	}
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	c = PingCheck{ElementName: elementName, InstanceName: instanceName, StatusCode: resp.StatusCode, Status: resp.Status, Message: bodybytes}
+	checks <- c
+	return c, nil
+
 }
 
 var listInstancesCmd = &cobra.Command{
