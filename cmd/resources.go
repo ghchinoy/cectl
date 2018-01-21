@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ghchinoy/cectl/ce"
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"

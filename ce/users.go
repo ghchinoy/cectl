@@ -7,13 +7,17 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 )
 
 const (
+	// UsersURI is the base uri for the Users resource
 	UsersURI = "/users"
+	// UserRoleURIFormat is a format string for the Roles of a user
+	UserRoleURIFormat = "/users/%v/roles"
 )
 
 type User struct {
@@ -33,6 +37,65 @@ type User struct {
 	CredentialNonExpired bool   `json:"credentialNonExpired,omitempty"`
 	AccountNonLocked     bool   `json:"accountNonLocked,omitempty"`
 	Enabled              bool   `json:"enabled,omitempty"`
+	Roles                []Role `json:"roles,omitempty"`
+}
+
+// Role represents a users role
+type Role struct {
+	Active      bool          `json:"active,omitempty"`
+	Description string        `json:"description,omitempty"`
+	ID          int           `json:"id,omitempty"`
+	Key         string        `json:"key,omitempty"`
+	Name        string        `json:"name,omitempty"`
+	Features    []RoleFeature `json:"features,omitempty"`
+}
+
+// RoleFeature is a feature of a role
+type RoleFeature struct {
+	ID          int    `json:"id,omitempty"`
+	ReadOnly    bool   `json:"read_only,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	CreateDate  string `json:"createDate,omitempty"`
+	Active      bool   `json:"active,omitempty"`
+}
+
+// AddRolesToUsers appends Role array to Users
+func AddRolesToUsers(base, auth string, usersbytes []byte) ([]byte, int, string, error) {
+
+	var users []User
+
+	err := json.Unmarshal(usersbytes, &users)
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	for i, u := range users {
+		url := fmt.Sprintf("%s%s", base, fmt.Sprintf(UserRoleURIFormat, u.ID))
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			fmt.Println("Can't construct request", err.Error())
+			os.Exit(1)
+		}
+		req.Header.Add("Authorization", auth)
+		req.Header.Add("Accept", "application/json")
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			break
+		}
+		bodybytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		var roles []Role
+		err = json.Unmarshal(bodybytes, &roles)
+		users[i].Roles = roles
+	}
+
+	bodybytes, err := json.Marshal(users)
+
+	return bodybytes, 200, "", nil
 }
 
 // GetAllUsers returns a byte stream of users, status code, curl cmd, and error (if occured)
@@ -70,23 +133,36 @@ func FormatUserList(usersbytes []byte) error {
 
 	var users []User
 
+	hasRoles := false
 	err := json.Unmarshal(usersbytes, &users)
 	if err != nil {
 		return err
 	}
 
 	for _, u := range users {
+		var roles []string
+		if len(u.Roles) > 0 {
+			hasRoles = true
+			for _, r := range u.Roles {
+				roles = append(roles, r.Key)
+			}
+		}
 		data = append(data, []string{
 			strconv.Itoa(u.ID),
 			u.FullName,
 			u.EMail,
 			u.LastLoginDate,
 			strconv.FormatBool(u.Active),
+			strings.Join(roles, ","),
 		})
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"ID", "Name", "EMail", "Last Login", "Active"})
+	if hasRoles {
+		table.SetHeader([]string{"ID", "Name", "EMail", "Last Login", "Active", "Roles"})
+	} else {
+		table.SetHeader([]string{"ID", "Name", "EMail", "Last Login", "Active"})
+	}
 	table.SetBorder(false)
 	table.AppendBulk(data)
 	table.Render()

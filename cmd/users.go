@@ -5,9 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/ghchinoy/cectl/ce"
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 )
+
+var withRoles bool
 
 var usersCmd = &cobra.Command{
 	Use:   "users",
@@ -29,8 +31,16 @@ var listUsersCmd = &cobra.Command{
 
 		bodybytes, status, curlcmd, err := ce.GetAllUsers(profilemap["base"], profilemap["auth"])
 		if err != nil {
-			fmt.Println("Unable to even", status)
+			fmt.Println("Unable to obtain list of users", status)
 			return
+		}
+
+		if withRoles {
+			bodybytes, _, _, err = ce.AddRolesToUsers(profilemap["base"], profilemap["auth"], bodybytes)
+			if err != nil {
+				fmt.Println("Addition of Roles unsuccessful")
+				return
+			}
 		}
 
 		if showCurl {
@@ -66,5 +76,7 @@ func init() {
 	usersCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	usersCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	usersCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
+
+	listUsersCmd.Flags().BoolVarP(&withRoles, "roles", "r", false, "include user roles")
 
 }

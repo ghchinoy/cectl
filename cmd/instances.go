@@ -22,7 +22,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ghchinoy/cectl/ce"
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 )
 

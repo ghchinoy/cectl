@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ghchinoy/cectl/ce"
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

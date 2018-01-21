@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
-  revision = "68e816d1c783414e79bc65b3994d9ab6b0a722ab"
+  revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
 
 [[projects]]
   name = "github.com/inconshreveable/mousetrap"
@@ -22,8 +22,8 @@
 [[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
-  revision = "be5ece7dd465ab0765a9682137865547526d1dfb"
-  version = "v1.7.3"
+  revision = "d419a98cdbed11a922bf76f257b7c4be79b50e73"
+  version = "v1.7.4"
 
 [[projects]]
   name = "github.com/mattn/go-runewidth"
@@ -35,7 +35,7 @@
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "d0303fe809921458f417bcf828397a65db30a7e4"
+  revision = "06020f85339e21b2478f756a78e295255ffa4d6a"
 
 [[projects]]
   branch = "master"
@@ -47,25 +47,19 @@
   branch = "master"
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
-  revision = "a7a4c189eb47ed33ce7b35f2880070a0c82a67d4"
-
-[[projects]]
-  name = "github.com/pelletier/go-buffruneio"
-  packages = ["."]
-  revision = "c37440a7cf42ac63b919c752ca73a85067e05992"
-  version = "v0.2.0"
+  revision = "65fec0d89a572b4367094e2058d3ebe667de3b60"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
   packages = ["."]
-  revision = "5ccdfb18c776b740aecaf085c4d9a2779199c279"
-  version = "v1.0.0"
+  revision = "16398bac157da96aa88f98a2df640c7f32af1da2"
+  version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/spf13/afero"
   packages = [".","mem"]
-  revision = "ee1bd8ee15a1306d1f9201acc41ef39cd9f99a1b"
+  revision = "8d919cbe7e2627e417f3e45c3c0e489a5b7e2536"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/spf13/cast"
@@ -77,7 +71,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "e5f66de850af3302fbe378c8acded2b0fa55472c"
+  revision = "ccaecb155a2177302cb56cae929251a256d0f646"
 
 [[projects]]
   branch = "master"
@@ -101,19 +95,19 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "314a259e304ff91bd6985da2a7149bbf91237993"
+  revision = "571f7bbbe08da2a8955aed9d4db316e78630e9a3"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
-  revision = "1cbadb444a806fd9430d14ad08967ed91da4fa0a"
+  revision = "eb22672bea55af56d225d4e35405f4d2e9f062a0"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "287cf08546ab5e7e37d55a84f7ed3fd1db036de5"
 
 [solve-meta]
   analyzer-name = "dep"

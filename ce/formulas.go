@@ -310,7 +310,10 @@ func FormulaUpdate(formulaID, base, auth string, formula Formula) ([]byte, int, 
 func FormulasList(base, auth string) ([]byte, int, string, error) {
 	var bodybytes []byte
 	url := fmt.Sprintf("%s%s", base, FormulasURI)
-	client := &http.Client{}
+	t := &http.Transport{
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+	client := &http.Client{Transport: t}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		// cant construct request

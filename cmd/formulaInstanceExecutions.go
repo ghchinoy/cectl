@@ -24,7 +24,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ghchinoy/cectl/ce"
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
