@@ -33,6 +33,39 @@ var instancesCmd = &cobra.Command{
 	Long:  `Manage Element Instances on the Platform`,
 }
 
+var testInstancesCmd = &cobra.Command{
+	Use:   "test",
+	Short: "Test Element Instances",
+	Long:  "Tests Element Instances by hitting /ping endpoint and reporting results",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// Get instances
+		bodybytes, statuscode, _, err := ce.GetAllInstances(profilemap["base"], profilemap["auth"])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		var instances []ce.ElementInstance
+		err = json.Unmarshal(bodybytes, &instances)
+		if err != nil { // can't umarshal into Instance objects
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		for _, i := range instances {
+			fmt.Printf("%s %s\n", profilemap["base"], i.Token)
+		}
+	},
+}
+
 var listInstancesCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Instances on Platform",
@@ -303,6 +336,7 @@ func init() {
 	instancesCmd.AddCommand(instanceDetailsCmd)
 	instancesCmd.AddCommand(instanceOperationDefinitionCmd)
 	instancesCmd.AddCommand(instanceDefinitionsCmd)
+	instancesCmd.AddCommand(testInstancesCmd)
 
 	instancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	instancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
