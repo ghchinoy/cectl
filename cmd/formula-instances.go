@@ -19,8 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
@@ -105,7 +107,52 @@ This will only invoke a manually triggerable Formula.`,
 		} else {
 			fmt.Printf("Execution ID: %v\n", ex[0].ID)
 		}
+	},
+}
 
+var deleteFormulaInstanceCmd = &cobra.Command{
+	Use:   "delete <id>",
+	Short: "deletes a Formula Instance",
+	Long:  `Deletes a Formula Instance by ID`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Instance ID & Operation name
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID ")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+		bodybytes, statuscode, curlcmd, err := ce.DeleteFormulaInstance(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		fmt.Printf("Deleted Formula Instance %s", args[0])
 	},
 }
 
@@ -119,5 +166,7 @@ func init() {
 	formulaInstancesCmd.AddCommand(triggerCmd)
 	triggerCmd.Flags().StringVarP(&triggerBody, "data", "d", "{}", "data for trigger body")
 	triggerCmd.Flags().BoolVarP(&triggerTextOutput, "text", "t", false, "output trigger id as text")
+
+	formulaInstancesCmd.AddCommand(deleteFormulaInstanceCmd)
 
 }
