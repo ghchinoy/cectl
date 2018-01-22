@@ -109,7 +109,7 @@ var infoCmd = &cobra.Command{
 		}
 		allCurlCommands = append(allCurlCommands, curlcmd)
 		if statuscode != 200 {
-			log.Printf("HTTP Error: %v\n", statuscode)
+			//log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
 		}
 		fmt.Println()
