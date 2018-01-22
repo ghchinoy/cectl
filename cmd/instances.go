@@ -35,6 +35,7 @@ var instancesCmd = &cobra.Command{
 	Long:  `Manage Element Instances on the Platform`,
 }
 
+// testInstanceCmd tests all instances by hitting the /ping endpoint
 var testInstancesCmd = &cobra.Command{
 	Use:   "test",
 	Short: "Test Element Instances",
@@ -219,6 +220,52 @@ var instanceDocsCmd = &cobra.Command{
 	},
 }
 
+var deleteElementInstanceCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete an Element Instance",
+	Long:  "Delete an Element Instance",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Instance ID & Operation name
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID ")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+		bodybytes, statuscode, curlcmd, err := ce.DeleteElementInstance(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		fmt.Printf("Deleted Element Instance %s", args[0])
+	},
+}
+
 var instanceDetailsCmd = &cobra.Command{
 	Use:   "details",
 	Short: "Details about an Instance",
@@ -397,6 +444,7 @@ func init() {
 	instancesCmd.AddCommand(instanceOperationDefinitionCmd)
 	instancesCmd.AddCommand(instanceDefinitionsCmd)
 	instancesCmd.AddCommand(testInstancesCmd)
+	instancesCmd.AddCommand(deleteElementInstanceCmd)
 
 	instancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	instancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
