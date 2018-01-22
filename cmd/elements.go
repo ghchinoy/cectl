@@ -17,6 +17,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -33,6 +34,58 @@ var elementsCmd = &cobra.Command{
 	Use:   "elements",
 	Short: "Manage Elements on the Platform",
 	Long:  `Manage Elements on the Platform`,
+}
+
+// importElementCmd is a command to import an Element json
+var importElementCmd = &cobra.Command{
+	Use:   "import",
+	Short: "Import an Element json to the Platform",
+	Long:  "Given an Eleemnt json, import into the Platform",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if len(args) < 1 {
+			fmt.Println("Please provide an element json")
+			os.Exit(1)
+		}
+		// read in file
+		filebytes, err := ioutil.ReadFile(args[0])
+		if err != nil {
+			fmt.Println("unable to read file", args[0], err.Error())
+			os.Exit(1)
+		}
+		// validate it's an Element
+		var e ce.Element
+		err = json.Unmarshal(filebytes, &e)
+		if err != nil {
+			fmt.Println("JSON doesn't appear to be an Element")
+			os.Exit(1)
+		}
+
+		bodybytes, statuscode, curlcmd, err := ce.ImportElement(profilemap["base"], profilemap["auth"], e)
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+			log.Printf("%s", bodybytes)
+		}
+		fmt.Printf("Element %s imported", e.Name)
+	},
 }
 
 // listElementsCmd represents the /elements API
@@ -377,6 +430,7 @@ func init() {
 	elementsCmd.AddCommand(elementDocsCmd)
 	elementsCmd.AddCommand(elementInstancesCmd)
 	elementsCmd.AddCommand(elementExportCmd)
+	elementsCmd.AddCommand(importElementCmd)
 	//elementsCmd.AddCommand(elementModelValidation)
 
 	// order-by flag: Order element list by
