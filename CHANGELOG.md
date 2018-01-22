@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 20180121 0.4.9
+
+* user info table display correction incorporated
+* display of empty resources list corrected
+* `resources delete <name>` - allows deleting of common resource objects
+* `elements import <element.json>` - imports an Element json to the Platform
+* `instances delete <id>` - deletes an Element Instance
+* `formula-instances delete <id>` - deletes a Formula Instance
+* separation of CE go library to [ce-go](https://github.com/ghchinoy/ce-go)
+
 ## 20180121 0.4.8
 
 * introduced `instances test` which hits the `/ping` endpoint for each Instance and reports non-200
