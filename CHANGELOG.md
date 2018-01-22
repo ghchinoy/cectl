@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20180121 0.4.9.1
+
+* restoring removed `formula-instances create <id> [name] [--configuration <configfile>]`
+
 ## 20180121 0.4.9
 
 * user info table display correction incorporated
