@@ -39,6 +39,49 @@ var resourcesCmd = &cobra.Command{
 	Long:  `List, add, remove and inspect common resource objects.`,
 }
 
+// deleteResourceCmd is the command to delete a resource
+var deleteResourceCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "deletes common object resource",
+	Long:  "given a common resource object name, delete it",
+	Run: func(cmd *cobra.Command, args []string) {
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if len(args) < 1 {
+			fmt.Println("must supply a Common Resource name")
+			os.Exit(1)
+		}
+
+		bodybytes, statuscode, curlcmd, err := ce.DeleteResource(profilemap["base"], profilemap["auth"], args[0])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		fmt.Printf("Resource %s deleted\n", args[0])
+	},
+}
+
 // listResourcesCmd represents the listResources command
 var listResourcesCmd = &cobra.Command{
 	Use:   "list",
@@ -335,4 +378,5 @@ func init() {
 	listResourcesCmd.Flags().BoolVarP(&withInstances, "with-instances", "i", false, "show mapped instances")
 	resourcesCmd.AddCommand(defineResourceCmd)
 	resourcesCmd.AddCommand(addResourceCmd)
+	resourcesCmd.AddCommand(deleteResourceCmd)
 }
