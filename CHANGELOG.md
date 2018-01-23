@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20180122 0.4.9.2
+
+* adds Element Instance IDs to output of `instances test`
+
 ## 20180121 0.4.9.1
 
 * restoring removed `formula-instances create <id> [name] [--configuration <configfile>]`
