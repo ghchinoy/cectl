@@ -38,9 +38,9 @@ var elementsCmd = &cobra.Command{
 
 // importElementCmd is a command to import an Element json
 var importElementCmd = &cobra.Command{
-	Use:   "import",
+	Use:   "import <path_to_element_json>",
 	Short: "Import an Element json to the Platform",
-	Long:  "Given an Eleemnt json, import into the Platform",
+	Long:  "Given an Element json, import into the Platform",
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for profile
 		profilemap, err := getAuth(profile)
@@ -50,6 +50,7 @@ var importElementCmd = &cobra.Command{
 		}
 		if len(args) < 1 {
 			fmt.Println("Please provide an element json")
+			cmd.Help()
 			os.Exit(1)
 		}
 		// read in file
