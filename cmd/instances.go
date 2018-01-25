@@ -70,15 +70,16 @@ var testInstancesCmd = &cobra.Command{
 			pingurl := fmt.Sprintf("%s/hubs/%s/ping", profilemap["base"], i.Element.Hub)
 			ceauthtoken := fmt.Sprintf("%s, Element %s", profilemap["auth"], i.Token)
 			// start a goroutine to /ping Instance
-			go pingInstance(i.Element.Name, i.Name, pingurl, ceauthtoken, results)
+			go pingInstance(i.Element.Name, i.Name, i.ID, pingurl, ceauthtoken, results)
 		}
 
 		// as results come in, print out if necessary
-		var num int // keep track of how many have come in
+		var num, bad int // keep track of how many have come in
 		fmt.Printf("Checking %v instances\n", len(instances))
 		for i := range results {
 			if i.StatusCode != 200 {
-				fmt.Printf("%s (%s) %s\n", i.ElementName, i.InstanceName, i.Status)
+				fmt.Printf("%5v %s (%s) %s\n", i.InstanceID, i.ElementName, i.InstanceName, i.Status)
+				bad++
 			}
 			num++
 			// if all expected results are in, close out the channel
@@ -86,6 +87,7 @@ var testInstancesCmd = &cobra.Command{
 				close(results)
 			}
 		}
+		fmt.Printf("%v/%v 200", len(instances)-bad, len(instances))
 	},
 }
 
@@ -96,10 +98,11 @@ type PingCheck struct {
 	StatusCode   int
 	Status       string
 	Message      []byte
+	InstanceID   int
 }
 
 // pingInstance makes an HTTP call to the Instances /ping endpoint
-func pingInstance(elementName, instanceName, url, auth string, checks chan PingCheck) (PingCheck, error) {
+func pingInstance(elementName, instanceName string, instanceID int, url, auth string, checks chan PingCheck) (PingCheck, error) {
 
 	var c PingCheck
 
@@ -121,7 +124,7 @@ func pingInstance(elementName, instanceName, url, auth string, checks chan PingC
 	bodybytes, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
-	c = PingCheck{ElementName: elementName, InstanceName: instanceName, StatusCode: resp.StatusCode, Status: resp.Status, Message: bodybytes}
+	c = PingCheck{ElementName: elementName, InstanceName: instanceName, StatusCode: resp.StatusCode, Status: resp.Status, Message: bodybytes, InstanceID: instanceID}
 	checks <- c
 	return c, nil
 
