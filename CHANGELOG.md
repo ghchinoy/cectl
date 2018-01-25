@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 20180125 0.5.0
+
+* Element import help text, shows help
+* `resources add` hidden (still active, but deprecated)
+* `resources import` replaces `resources add`
+
 ## 20180121 0.4.9.1
 
 * restoring removed `formula-instances create <id> [name] [--configuration <configfile>]`
