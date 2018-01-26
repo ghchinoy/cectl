@@ -84,6 +84,7 @@ var importElementCmd = &cobra.Command{
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
 			log.Printf("%s", bodybytes)
+			os.Exit(1)
 		}
 		fmt.Printf("Element %s imported", e.Name)
 	},

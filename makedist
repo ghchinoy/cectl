@@ -5,7 +5,7 @@
 # No need to change anything below ####
 # 
 
-VERSION=0.5.0
+VERSION=0.5.1
 
 TOOLNAME=cectl
 OSLIST=(linux darwin windows)

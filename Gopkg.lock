@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "28b771be20056956278d3e8a483acdfd81fb5082"
+  revision = "51b7d9857019fe2864895955f730ab7ee45de8f9"
 
 [[projects]]
   branch = "master"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "0c34d16c3123764e413b9ed982ada58b1c3d53ea"
+  revision = "f91529fc609202eededff4de2dc0ba2f662240a3"
 
 [[projects]]
   branch = "master"
@@ -101,7 +101,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "af50095a40f9041b3b38960738837185c26e9419"
+  revision = "03467258950d845cd1877eab69461b98e8c09219"
 
 [[projects]]
   branch = "master"

@@ -1,16 +1,10 @@
 # CHANGELOG
 
-<<<<<<< HEAD
 ## 20180125 0.5.0
 
 * Element import help text, shows help
 * `resources add` hidden (still active, but deprecated)
 * `resources import` replaces `resources add`
-=======
-## 20180122 0.4.9.2
-
-* adds Element Instance IDs to output of `instances test`
->>>>>>> 7a743ed3a045ae3f9fa2f6a68faab67221731ef1
 
 ## 20180121 0.4.9.1
 
