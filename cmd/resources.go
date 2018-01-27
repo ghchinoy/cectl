@@ -398,45 +398,23 @@ var defineResourceCmd = &cobra.Command{
 	Long:  "Display the definition a named common object resource",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 		if len(args) < 1 {
 			fmt.Println("must supply a name of a Common Resource")
 			cmd.Help()
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.CommonResourceDefinitionsFormatURI, args[0]),
-		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
-			os.Exit(1)
-		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+		bodybytes, status, curlcmd, err := ce.GetResourceDefinition(profilemap["base"], profilemap["auth"], args[0])
 
 		if showCurl {
-			curlcmd, _ := http2curl.GetCurlCommand(req)
+			//curlcmd, _ := http2curl.GetCurlCommand(req)
 			log.Println(curlcmd)
 		}
 
@@ -445,10 +423,10 @@ var defineResourceCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Print(resp.Status)
-			if resp.StatusCode == 404 {
-				fmt.Printf("Unable to contact CE API, %s\n", url)
+		if status != 200 {
+			fmt.Print(status)
+			if status == 404 {
+				fmt.Println("Unable to contact CE API")
 				return
 			}
 			fmt.Println()
