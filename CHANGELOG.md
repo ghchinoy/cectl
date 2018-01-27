@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 20180126 0.6.0
+## 20180126 0.6.1
 
 * `molecules export [formulas|resources|all (default)]` initial version; `molecules` hidden
 

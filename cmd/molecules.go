@@ -114,6 +114,8 @@ var cloneCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(moleculesCmd)
 
+	moleculesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
+
 	moleculesCmd.AddCommand(exportCmd)
 	moleculesCmd.AddCommand(cloneCmd)
 	cloneCmd.PersistentFlags().StringVar(&profileSource, "from", "default", "source profile name")
