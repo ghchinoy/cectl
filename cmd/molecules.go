@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,19 +42,29 @@ var exportCmd = &cobra.Command{
 	Long:  "Exports a set of assets",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		/*
-			// check for profile
-			profilemap, err := getAuth(profile)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-		*/
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		scope := "all"
 		if len(args) > 0 {
 			// args[0] should be either "formulas" | "resources"
 			scope = args[0]
+		}
+
+		err = ce.ExportAllFormulasToDir(profilemap["base"], profilemap["auth"], "./formulas")
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		err = ce.ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
 		}
 
 		fmt.Println("Scope", scope)
