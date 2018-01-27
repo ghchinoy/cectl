@@ -82,9 +82,10 @@ var exportCmd = &cobra.Command{
 
 // cloneCmd is the command to clone assets between accounts
 var cloneCmd = &cobra.Command{
-	Use:   "clone",
-	Short: "clone assets from one profile to another",
-	Long:  "Clone exports assets from one account profile (--from) and imports them into another profile (--to)",
+	Use:    "clone",
+	Short:  "clone assets from one profile to another",
+	Long:   "Clone exports assets from one account profile (--from) and imports them into another profile (--to)",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		/*
