@@ -25,7 +25,6 @@ import (
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
-	"github.com/moul/http2curl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,72 +48,43 @@ A name for the Formula Instance will be required when using a flag.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			fmt.Println("Please supply an ID of a Formula template\ncectl formula-instance create <ID> [name]")
+			cmd.Help()
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		createformat := "/formulas/%s/instances"
-		url := fmt.Sprintf("%s%s", base, fmt.Sprintf(createformat, args[0]))
-
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
 		// if no instance config json given, check for name
-		var fi ce.FormulaInstanceConfig
+		var config ce.FormulaInstanceConfig
+		// formulaInstanceConfiguration will be set if the flag --configuration has a value (which should be a JSON filename)
 		if formulaInstanceConfiguration == "" {
 			if len(args) < 2 {
 				fmt.Println("Please provide a name for the Instance if not submitting a Formula Instance configuration definition\ncectl formula-instance create <ID> [name]")
 				os.Exit(1)
 			}
-			fi = ce.FormulaInstanceConfig{Name: args[1], Active: true}
+			config = ce.FormulaInstanceConfig{Name: args[1], Active: true}
 		} else {
 			var raw map[string]interface{}
 			_ = json.Unmarshal([]byte(formulaInstanceConfiguration), &raw)
-			fi = ce.FormulaInstanceConfig{Name: args[1], Active: true, Configuration: raw}
+			config = ce.FormulaInstanceConfig{Name: args[1], Active: true, Configuration: raw}
 		}
 
-		fibytes, err := json.Marshal(fi)
-		fmt.Println(url)
-		fmt.Printf("%s\n", fibytes)
-		if err != nil {
-			fmt.Println("Unable to convert to Formula Instance configuration json", err.Error())
-			os.Exit(1)
-		}
-
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", url, bytes.NewReader(fibytes))
-		if err != nil {
-			fmt.Println("Unable to create request", err.Error())
-			os.Exit(1)
-		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		curlCmd, _ := http2curl.GetCurlCommand(req)
-		curl := fmt.Sprintf("%s", curlCmd)
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+		bodybytes, status, curlcmd, err := ce.CreateFormulaInstance(profilemap["base"], profilemap["auth"], args[0], config)
 
 		if showCurl {
-			log.Println(curl)
+			log.Println(curlcmd)
 		}
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
-		fmt.Println(resp.Status)
+		fmt.Println(status)
 	},
 }
 
