@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "6eccf51f783092e118261690ef47e059ab54274b"
+  revision = "2b62ff512d3612c5b8a836a29696ad93f51fb0be"
 
 [[projects]]
   branch = "master"
