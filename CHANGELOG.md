@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 20180126 0.6.0
+
+* `molecules export [formulas|resources|all (default)]` initial version; `molecules` hidden
+
 ## 20180125 0.5.0
 
 * Element import help text, shows help
