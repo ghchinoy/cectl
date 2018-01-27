@@ -49,25 +49,34 @@ var exportCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		scope := "all"
+		scope := []string{"formulas", "resources"}
 		if len(args) > 0 {
 			// args[0] should be either "formulas" | "resources"
-			scope = args[0]
+			if args[0] == "formulas" {
+				scope = []string{"formulas"}
+			}
+			if args[0] == "resources" {
+				scope = []string{"resources"}
+			}
 		}
 
-		err = ce.ExportAllFormulasToDir(profilemap["base"], profilemap["auth"], "./formulas")
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+		for _, v := range scope {
+			if v == "formulas" {
+				err = ce.ExportAllFormulasToDir(profilemap["base"], profilemap["auth"], "./formulas")
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+			}
+			if v == "resources" {
+				err = ce.ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+			}
 		}
 
-		err = ce.ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-
-		fmt.Println("Scope", scope)
 	},
 }
 
