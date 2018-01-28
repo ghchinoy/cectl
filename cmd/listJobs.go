@@ -17,16 +17,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/ghchinoy/ce-go/ce"
-	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // listJobsCmd represents the listJobs command
@@ -35,36 +31,17 @@ var listJobsCmd = &cobra.Command{
 	Short: "list jobs on platform",
 	Long:  `List jobs on the platform`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s", base, "/jobs")
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
+		// check for profile
+		profilemap, err := getAuth(profile)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+
+		bodybytes, status, curlcmd, err := ce.ListJobs(profilemap["base"], profilemap["auth"])
 
 		if showCurl {
-			curlcmd, _ := http2curl.GetCurlCommand(req)
+
 			log.Println(curlcmd)
 		}
 
@@ -73,10 +50,10 @@ var listJobsCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Print(resp.Status)
-			if resp.StatusCode == 404 {
-				fmt.Printf("Unable to contact CE API, %s\n", url)
+		if status != 200 {
+			fmt.Print(status)
+			if status == 404 {
+				fmt.Printf("Unable to contact CE API, %s\n", profilemap["base"])
 				return
 			}
 			fmt.Println()
