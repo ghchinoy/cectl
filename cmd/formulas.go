@@ -116,8 +116,10 @@ var formulaDeactivateCmd = &cobra.Command{
 	Short: "Deactivate a Formula template",
 	Long:  `Sets a Formula template to an inactive state`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
@@ -126,13 +128,8 @@ var formulaDeactivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
 		// Get the Formula
-		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], profilemap["base"], profilemap["auth"])
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -148,7 +145,7 @@ var formulaDeactivateCmd = &cobra.Command{
 		formula.Active = false
 
 		// PATCH to set the Formula back
-		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base.(string), auth, formula)
+		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], profilemap["base"], profilemap["auth"], formula)
 		err = json.Unmarshal(patchBytes, &formula)
 		if err != nil {
 			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
@@ -183,7 +180,7 @@ var formulaDeactivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), profilemap["base"], profilemap["auth"])
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -195,7 +192,7 @@ var formulaDeactivateCmd = &cobra.Command{
 		}
 
 		var instancecount string
-		instances, err := ce.GetInstancesOfFormula(f.ID, base.(string), auth)
+		instances, err := ce.GetInstancesOfFormula(f.ID, profilemap["base"], profilemap["auth"])
 		if err != nil {
 			// unable to retrieve instances of formula!
 			instancecount = "N/A"
