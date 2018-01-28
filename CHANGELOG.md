@@ -1,4 +1,21 @@
-# CHANGELOG
+# (next version)
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+## v0.7.0
+
+NEW FEATURES
+
+BUG FIXES
+
+IMPROVEMENTS
+
+* isolated CE API to [`ce-go`](https://github.com/ghchinoy/ce-go) library ([#8](https://github.com/ghchinoy/cectl/issues/8))
+* using [dep-style changelog format](https://github.com/golang/dep) going forwards
 
 ## 20180126 0.6.1
 
