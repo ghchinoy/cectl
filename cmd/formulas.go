@@ -19,15 +19,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
-	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // formulasCmd represents the formulas command
@@ -350,40 +347,20 @@ var deleteFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.FormulaURIFormat, args[0]),
-		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("DELETE", url, nil)
+		// check for profile
+		profilemap, err := getAuth(profile)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
+
+		bodybytes, status, curlcmd, err := ce.DeleteFormula(profilemap["base"], profilemap["auth"], args[0])
 		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
+			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
 
 		if showCurl {
-			curlcmd, _ := http2curl.GetCurlCommand(req)
 			log.Println(curlcmd)
 		}
 
@@ -392,8 +369,8 @@ var deleteFormulaCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.Status)
+		if status != 200 {
+			fmt.Println(status)
 			var ficr ce.FormulaInstanceCreationResponse
 			err = json.Unmarshal(bodybytes, &ficr)
 			if err != nil {
