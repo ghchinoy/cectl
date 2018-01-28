@@ -49,19 +49,13 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 	Short: "list executions for instance id",
 	Long:  `Lists the Formula Instance Executions given an ID of a Formula Instance`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
-
-		if len(args) < 1 {
-			fmt.Println("must supply an ID of a Formula Instance")
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
 
 		// add eventId and/or objectId query params as needed
 		// if formulaExecutionQueryObjectID | formulaExecutionQueryEventID > 0
@@ -77,31 +71,24 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 
 		}
 
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.FormulaExecutionsURIFormat, args[0]),
-		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+		bodybytes, status, curlcmd, err := ce.GetFormulaInstanceExecutions(profilemap["base"], profilemap["auth"], args[0])
 
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
-			os.Exit(1)
+		if showCurl {
+			log.Println(curlcmd)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
+		}
+
+		if status != 200 {
+			fmt.Print(status)
+			if status == 404 {
+				fmt.Println("Unable to contact CE API")
+				return
+			}
+			fmt.Println()
 		}
 
 		data := [][]string{}
