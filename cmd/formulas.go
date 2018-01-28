@@ -78,6 +78,9 @@ var importFormulaCmd = &cobra.Command{
 			f,
 		)
 
+		if showCurl {
+			log.Println(curlcmd)
+		}
 		if status != 200 {
 			fmt.Println(status)
 			fmt.Printf("%s\n", bodybytes)
