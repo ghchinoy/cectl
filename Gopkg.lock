@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "a75da31cd25e7830ca81e132041c85d886b89520"
+  revision = "6397dbcbc7986d599f6d82e59c54e46c87dfd353"
 
 [[projects]]
   branch = "master"
@@ -118,6 +118,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "76804cef83f0e9c54181be6fa31cfece2ea7bfb8396e61cf46613e93b80f4f59"
+  inputs-digest = "8bcf27c7453b1aefdbac7e34e897203b38ee5b17c31c5d584c4c6d87b159603b"
   solver-name = "gps-cdcl"
   solver-version = 1

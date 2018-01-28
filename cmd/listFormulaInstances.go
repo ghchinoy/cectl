@@ -17,8 +17,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -26,7 +25,6 @@ import (
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // listFormualInstancesCmd represents the listFormualInstances command
@@ -41,44 +39,26 @@ var listFormulaInstancesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.FormulaInstancesURIFormat, args[0]),
-		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
+		// check for profile
+		profilemap, err := getAuth(profile)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
+
+		bodybytes, status, curlcmd, err := ce.GetFormulaInstances(profilemap["base"], profilemap["auth"], args[0])
+
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
 		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
 
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
 
-		if resp.StatusCode == 200 {
+		if status == 200 {
 			data := [][]string{}
 
 			var instances []ce.FormulaInstance

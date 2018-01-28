@@ -15,20 +15,16 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
-	"github.com/moul/http2curl"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // formulasCmd represents the formulas command
@@ -51,8 +47,10 @@ var importFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
@@ -71,36 +69,19 @@ var importFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			"/formulas",
+		bodybytes, status, curlcmd, err := ce.ImportFormula(
+			profilemap["base"],
+			profilemap["auth"],
+			f,
 		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", url, bytes.NewReader(filebytes))
-		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
-			os.Exit(1)
+		if showCurl {
+			log.Println(curlcmd)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.Status)
+		if status != 200 {
+			fmt.Println(status)
 			fmt.Printf("%s\n", bodybytes)
+			os.Exit(1)
 		}
 
 		if outputJSON {
@@ -108,7 +89,7 @@ var importFormulaCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode == 200 {
+		if status == 200 {
 			fmt.Println("Formula template added to Platform.")
 			var f ce.Formula
 			err = json.Unmarshal(bodybytes, &f)
@@ -132,8 +113,10 @@ var formulaDeactivateCmd = &cobra.Command{
 	Short: "Deactivate a Formula template",
 	Long:  `Sets a Formula template to an inactive state`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
@@ -142,13 +125,8 @@ var formulaDeactivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
 		// Get the Formula
-		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], profilemap["base"], profilemap["auth"])
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -164,7 +142,7 @@ var formulaDeactivateCmd = &cobra.Command{
 		formula.Active = false
 
 		// PATCH to set the Formula back
-		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base.(string), auth, formula)
+		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], profilemap["base"], profilemap["auth"], formula)
 		err = json.Unmarshal(patchBytes, &formula)
 		if err != nil {
 			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
@@ -199,7 +177,7 @@ var formulaDeactivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), profilemap["base"], profilemap["auth"])
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -211,7 +189,7 @@ var formulaDeactivateCmd = &cobra.Command{
 		}
 
 		var instancecount string
-		instances, err := ce.GetInstancesOfFormula(f.ID, base.(string), auth)
+		instances, err := ce.GetInstancesOfFormula(f.ID, profilemap["base"], profilemap["auth"])
 		if err != nil {
 			// unable to retrieve instances of formula!
 			instancecount = "N/A"
@@ -248,8 +226,10 @@ var formulaActivateCmd = &cobra.Command{
 	Short: "Activate a Formula template",
 	Long:  `Sets a Formula template to active state`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
@@ -258,13 +238,11 @@ var formulaActivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+		base := profilemap["base"]
+		auth := profilemap["auth"]
 
 		// Get the Formula
-		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], base, auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -280,7 +258,7 @@ var formulaActivateCmd = &cobra.Command{
 		formula.Active = true
 
 		// PATCH to set the Formula back
-		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base.(string), auth, formula)
+		patchBytes, statuscode, err := ce.FormulaUpdate(args[0], base, auth, formula)
 		err = json.Unmarshal(patchBytes, &formula)
 		if err != nil {
 			fmt.Printf("Unable to retrieve formula, %s\n", err.Error())
@@ -315,7 +293,7 @@ var formulaActivateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), fmt.Sprintf("%s", base), auth)
+		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), base, auth)
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -327,7 +305,7 @@ var formulaActivateCmd = &cobra.Command{
 		}
 
 		var instancecount string
-		instances, err := ce.GetInstancesOfFormula(f.ID, base.(string), auth)
+		instances, err := ce.GetInstancesOfFormula(f.ID, base, auth)
 		if err != nil {
 			// unable to retrieve instances of formula!
 			instancecount = "N/A"
@@ -369,40 +347,20 @@ var deleteFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
-			os.Exit(1)
-		}
-
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			fmt.Sprintf(ce.FormulaURIFormat, args[0]),
-		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
-
-		client := &http.Client{}
-		req, err := http.NewRequest("DELETE", url, nil)
+		// check for profile
+		profilemap, err := getAuth(profile)
 		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
+
+		bodybytes, status, curlcmd, err := ce.DeleteFormula(profilemap["base"], profilemap["auth"], args[0])
 		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
+			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
 
 		if showCurl {
-			curlcmd, _ := http2curl.GetCurlCommand(req)
 			log.Println(curlcmd)
 		}
 
@@ -411,8 +369,8 @@ var deleteFormulaCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.Status)
+		if status != 200 {
+			fmt.Println(status)
 			var ficr ce.FormulaInstanceCreationResponse
 			err = json.Unmarshal(bodybytes, &ficr)
 			if err != nil {
@@ -423,7 +381,7 @@ var deleteFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if resp.StatusCode == 200 {
+		if status == 200 {
 			fmt.Printf("Formula %s deleted.\n", args[0])
 			fmt.Printf("%s\n", bodybytes)
 		}
