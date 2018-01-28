@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -51,8 +50,10 @@ var importFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !viper.IsSet(profile + ".base") {
-			fmt.Println("Can't find info for profile", profile)
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
@@ -71,36 +72,16 @@ var importFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		base := viper.Get(profile + ".base")
-		user := viper.Get(profile + ".user")
-		org := viper.Get(profile + ".org")
-
-		url := fmt.Sprintf("%s%s",
-			base,
-			"/formulas",
+		bodybytes, status, curlcmd, err := ce.ImportFormula(
+			profilemap["base"],
+			profilemap["auth"],
+			f,
 		)
-		auth := fmt.Sprintf("User %s, Organization %s", user, org)
 
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", url, bytes.NewReader(filebytes))
-		if err != nil {
-			fmt.Println("Can't construct request", err.Error())
-			os.Exit(1)
-		}
-		req.Header.Add("Authorization", auth)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Cannot process response", err.Error())
-			os.Exit(1)
-		}
-		bodybytes, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			fmt.Println(resp.Status)
+		if status != 200 {
+			fmt.Println(status)
 			fmt.Printf("%s\n", bodybytes)
+			os.Exit(1)
 		}
 
 		if outputJSON {
@@ -108,7 +89,7 @@ var importFormulaCmd = &cobra.Command{
 			return
 		}
 
-		if resp.StatusCode == 200 {
+		if status == 200 {
 			fmt.Println("Formula template added to Platform.")
 			var f ce.Formula
 			err = json.Unmarshal(bodybytes, &f)
