@@ -381,7 +381,7 @@ var deleteFormulaCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if resp.StatusCode == 200 {
+		if status == 200 {
 			fmt.Printf("Formula %s deleted.\n", args[0])
 			fmt.Printf("%s\n", bodybytes)
 		}
