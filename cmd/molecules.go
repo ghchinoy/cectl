@@ -15,10 +15,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
+	"strings"
 
-	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -62,14 +65,14 @@ var exportCmd = &cobra.Command{
 
 		for _, v := range scope {
 			if v == "formulas" {
-				err = ce.ExportAllFormulasToDir(profilemap["base"], profilemap["auth"], "./formulas")
+				err = ExportAllFormulasToDir(profilemap["base"], profilemap["auth"], "./formulas")
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
 				}
 			}
 			if v == "resources" {
-				err = ce.ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
+				err = ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
@@ -78,6 +81,66 @@ var exportCmd = &cobra.Command{
 		}
 
 	},
+}
+
+// ExportAllFormulasToDir creates a directory given and exports all Formula JSON files
+func ExportAllFormulasToDir(base, auth string, dirname string) error {
+	formulaListByes, _, _, err := FormulasList(base, auth)
+	if err != nil {
+		return err
+	}
+	var formulas []Formula
+	err = json.Unmarshal(formulaListByes, &formulas)
+	if err != nil {
+		return err
+	}
+
+	// create formulas dir
+	err = os.MkdirAll(dirname, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	for _, f := range formulas {
+		name := fmt.Sprintf("%s.formula.json", strings.Replace(f.Name, " ", "", -1))
+		formulaBytes, err := json.Marshal(f)
+		if err != nil {
+			break
+		}
+		fmt.Printf("Exporting '%s' to %s/%s\n", f.Name, dirname, name)
+		err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, name), formulaBytes, 0644)
+	}
+
+	return nil
+}
+
+// ExportAllResourcesToDir writes out all the resources to the speceified irectory
+func ExportAllResourcesToDir(base, auth string, dirname string) error {
+	resourcesListBytes, _, _, err := ResourcesList(base, auth)
+	if err != nil {
+		return err
+	}
+	var resources []CommonResource
+	err = json.Unmarshal(resourcesListBytes, &resources)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(dirname, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	for _, r := range resources {
+
+		resourceBytes, _, _, err := GetResourceDefinition(base, auth, r.Name)
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+		name := fmt.Sprintf("%s.cro.json", r.Name)
+		fmt.Printf("Exporting %s to %s/%s\n", r.Name, dirname, name)
+		err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, name), resourceBytes, 0644)
+	}
+
+	return nil
 }
 
 // cloneCmd is the command to clone assets between accounts
