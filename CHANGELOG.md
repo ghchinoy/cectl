@@ -16,6 +16,7 @@ IMPROVEMENTS
 
 * isolated CE API to [`ce-go`](https://github.com/ghchinoy/ce-go) library ([#8](https://github.com/ghchinoy/cectl/issues/8))
 * using [dep-style changelog format](https://github.com/golang/dep) going forwards
+* Export Resources and Formulas methods are here now, instead of within [ce-go]((https://github.com/ghchinoy/ce-go))
 
 ## 20180126 0.6.1
 
