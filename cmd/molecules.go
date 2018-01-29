@@ -90,7 +90,7 @@ func ExportAllFormulasToDir(base, auth string, dirname string) error {
 	if err != nil {
 		return err
 	}
-	var formulas []Formula
+	var formulas []ce.Formula
 	err = json.Unmarshal(formulaListByes, &formulas)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func ExportAllResourcesToDir(base, auth string, dirname string) error {
 	if err != nil {
 		return err
 	}
-	var resources []CommonResource
+	var resources []ce.CommonResource
 	err = json.Unmarshal(resourcesListBytes, &resources)
 	if err != nil {
 		return err
