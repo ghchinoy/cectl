@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ghchinoy/ce-go/ce"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -85,7 +86,7 @@ var exportCmd = &cobra.Command{
 
 // ExportAllFormulasToDir creates a directory given and exports all Formula JSON files
 func ExportAllFormulasToDir(base, auth string, dirname string) error {
-	formulaListByes, _, _, err := FormulasList(base, auth)
+	formulaListByes, _, _, err := ce.FormulasList(base, auth)
 	if err != nil {
 		return err
 	}
@@ -115,7 +116,7 @@ func ExportAllFormulasToDir(base, auth string, dirname string) error {
 
 // ExportAllResourcesToDir writes out all the resources to the speceified irectory
 func ExportAllResourcesToDir(base, auth string, dirname string) error {
-	resourcesListBytes, _, _, err := ResourcesList(base, auth)
+	resourcesListBytes, _, _, err := ce.ResourcesList(base, auth)
 	if err != nil {
 		return err
 	}
@@ -130,7 +131,7 @@ func ExportAllResourcesToDir(base, auth string, dirname string) error {
 	}
 	for _, r := range resources {
 
-		resourceBytes, _, _, err := GetResourceDefinition(base, auth, r.Name)
+		resourceBytes, _, _, err := ce.GetResourceDefinition(base, auth, r.Name)
 		if err != nil {
 			log.Println(err.Error())
 			break
