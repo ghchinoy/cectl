@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	toml "github.com/pelletier/go-toml"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -76,6 +77,8 @@ var addProfileCmd = &cobra.Command{
 	},
 }
 
+var longProfile bool
+
 // listProfilesCmd represents the listProfiles command
 var listProfilesCmd = &cobra.Command{
 	Use:   "list",
@@ -111,6 +114,30 @@ var listProfilesCmd = &cobra.Command{
 			profiles = append(profiles, k)
 		}
 		sort.Strings(profiles)
+		if longProfile {
+			data := [][]string{}
+			fmt.Printf("%v profiles\n", len(profiles))
+			for _, k := range profiles {
+				if k == "profile" {
+					break
+				}
+				v := settings[k].(map[string]interface{})
+				if v["base"] == nil {
+					break
+				}
+				data = append(data, []string{
+					k,
+					fmt.Sprintf("%s", v["base"]),
+				})
+			}
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"profile", "base url"})
+			table.SetBorder(false)
+			table.SetAlignment(tablewriter.ALIGN_LEFT)
+			table.AppendBulk(data)
+			table.Render()
+			os.Exit(0)
+		}
 		posn := sort.SearchStrings(profiles, "profile")
 		profiles = append(profiles[:posn], profiles[posn+1:]...)
 		fmt.Println("Valid profiles:", strings.Join(profiles, ", "))
@@ -213,16 +240,6 @@ func writeConfigAs(filename string, force bool) error {
 func init() {
 	RootCmd.AddCommand(profilesCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// profileCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// profileCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 	profilesCmd.PersistentFlags().StringVar(&cfgFile, "config", "", cfgHelp)
 	profilesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	// Set bash-completion
@@ -230,6 +247,7 @@ func init() {
 	profilesCmd.PersistentFlags().SetAnnotation("config", cobra.BashCompFilenameExt, validConfigFilenames)
 
 	profilesCmd.AddCommand(listProfilesCmd)
+	listProfilesCmd.PersistentFlags().BoolVarP(&longProfile, "long", "l", false, "show long profile")
 	profilesCmd.AddCommand(addProfileCmd)
 	profilesCmd.AddCommand(setProfileCmd)
 
