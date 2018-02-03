@@ -25,6 +25,7 @@ import (
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -170,11 +171,67 @@ var listInstancesCmd = &cobra.Command{
 }
 
 var listInstanceTransformationsCmd = &cobra.Command{
-	Use:   "transformations",
+	Use:   "transformations <id>",
 	Short: "Show the transformations mapped to an Instance",
 	Long:  "Show the Transformations associated with this Element Instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Unimplemented: Transformations per Instance")
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if len(args) == 0 {
+			fmt.Println("ID must be provided")
+			cmd.Help()
+			os.Exit(1)
+		}
+		if _, err := strconv.Atoi(args[0]); err != nil {
+			fmt.Println("ID must be an integer")
+			cmd.Help()
+			os.Exit(1)
+		}
+		bodybytes, statuscode, curlcmd, err := ce.GetInstanceTransformations(profilemap["base"], profilemap["auth"], args[0])
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("No Transformations for %s\n", args[0])
+			os.Exit(0)
+			// handle this nicely, show error description
+		}
+		// handle global options, json
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			os.Exit(1)
+		}
+
+		txs := make(map[string]ce.Transformation)
+		err = json.Unmarshal(bodybytes, &txs)
+		if err != nil {
+			os.Exit(1)
+		}
+
+		data := [][]string{}
+		for k, v := range txs {
+			data = append(data, []string{
+				k,
+				v.VendorName,
+				fmt.Sprintf("%v", len(v.Fields)),
+				fmt.Sprintf("%v", len(v.Configuration)),
+				fmt.Sprintf("%v", v.IsLegacy),
+				v.StartDate,
+			})
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"resource", "vendor", "# Fields", "# Configs", "Legacy", "Start Date"})
+		table.SetBorder(false)
+		table.AppendBulk(data)
+		table.Render()
+
 	},
 }
 
