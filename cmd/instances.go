@@ -219,6 +219,7 @@ var listInstanceTransformationsCmd = &cobra.Command{
 			data = append(data, []string{
 				k,
 				v.VendorName,
+				v.Level,
 				fmt.Sprintf("%v", len(v.Fields)),
 				fmt.Sprintf("%v", len(v.Configuration)),
 				fmt.Sprintf("%v", v.IsLegacy),
@@ -227,7 +228,7 @@ var listInstanceTransformationsCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"resource", "vendor", "# Fields", "# Configs", "Legacy", "Start Date"})
+		table.SetHeader([]string{"Resource", "Vendor", "Level", "# Fields", "# Configs", "Legacy", "Start Date"})
 		table.SetBorder(false)
 		table.AppendBulk(data)
 		table.Render()
