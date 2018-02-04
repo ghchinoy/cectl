@@ -10,7 +10,8 @@ IMPROVEMENTS:
 
 NEW FEATURES
 
-* `transformations` top level command, `elements transformations <id>` and `instances transformations <id>` command
+* `transformations` top level command, with one subcommand, `transformations list`
+* New transformations subcommands, `elements transformations <id>` and `instances transformations <id>` command, to list the Transformations associated with an Element ID/key or Element Instance ID, respectively
 * `molecules export` now exports Transformations per Element into a file in the created `transformations` directory
 * `profiles list` has a new flag to output a table of profiles available, `-l` or `--long`
 
