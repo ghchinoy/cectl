@@ -53,9 +53,9 @@ var exportCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		scope := []string{"formulas", "resources"}
+		scope := []string{"formulas", "resources", "transformations"}
 		if len(args) > 0 {
-			// args[0] should be either "formulas" | "resources"
+			// args[0] should be either "formulas" | "resources" | "transformations"
 			if args[0] == "formulas" {
 				scope = []string{"formulas"}
 			}
