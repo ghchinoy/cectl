@@ -10,6 +10,10 @@ IMPROVEMENTS:
 
 NEW FEATURES
 
+* `transformations` top level command, `elements transformations <id>` and `instances transformations <id>` command
+* `molecules export` now exports Transformations per Element into a file in the created `transformations` directory
+* `profiles list` has a new flag to output a table of profiles available, `-l` or `--long`
+
 BUG FIXES
 
 IMPROVEMENTS
