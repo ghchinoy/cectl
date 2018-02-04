@@ -1,11 +1,27 @@
+// Copyright © 2017 G. Hussain Chinoy <ghchinoy@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"sort"
+	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
@@ -19,8 +35,76 @@ var transformationsCmd = &cobra.Command{
 	Long:  `Manage Transformations on the Platform`,
 }
 
+// associateTransformationCmd adds a Transformation to an Element, given a Transformation JSON file
+// This isn't ready - a Transformation requires a vendorName otherwise an added Transformation
+// may not map to an Element's
+var associateTransformationCmd = &cobra.Command{
+	Use:    "associate <element_key | element_id> <transformation.json> [name]",
+	Short:  "Associate a Transformation with an Element",
+	Long:   "Associate a Transformation with an Element given a Transformation JSON file path",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if len(args) < 2 {
+			fmt.Println("Please provide both an Element key|id and a path to a Transformation JSON file")
+			os.Exit(1)
+		}
+		// validate Element ID
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		// validate Transformation json file
+		var transformation ce.Transformation
+		txbytes, err := ioutil.ReadFile(args[1])
+		if err != nil {
+			fmt.Println("Supplied file cannot be read", err.Error())
+			os.Exit(1)
+		}
+		err = json.Unmarshal(txbytes, &transformation)
+		if err != nil {
+			fmt.Println("Supplied file does not contain a Transformation", err.Error())
+			os.Exit(1)
+		}
+		// Provide a name for the object if supplied
+		if len(args) == 3 {
+			transformation.ObjectName = args[2]
+		}
+
+		bodybytes, status, curlcmd, err := ce.AssociateTransformationWithElement(
+			profilemap["base"], profilemap["auth"],
+			strconv.Itoa(elementid),
+			transformation)
+		if err != nil {
+			fmt.Println("Unable to import Transformation", err.Error())
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 status: ", status)
+			var message interface{}
+			json.Unmarshal(bodybytes, &message)
+			fmt.Printf("%s\n", message)
+			os.Exit(1)
+		}
+		fmt.Printf("%s\n", bodybytes)
+
+	},
+}
+
 var withElementAssociations bool
 
+// listTransformationsCmd is the command to list Transformations
+// the flag --with-elements will also list the Elements the Transformation has associations with
 var listTransformationsCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Transformations",
@@ -130,6 +214,79 @@ var listTransformationsCmd = &cobra.Command{
 	},
 }
 
+var deleteTransformationCmd = &cobra.Command{
+	Use:   "delete <resource> <element>",
+	Short: "Delete a Transformation association",
+	Long:  "Delete a Transformation association from an Element given a Resource name and Element Key or ID",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// So many guards
+
+		// ... for arg length
+		if len(args) < 2 {
+			fmt.Println("Please provide both a Resource name and an Element key|id")
+			os.Exit(1)
+		}
+		// ... validate Element ID
+		elementid, err := ce.ElementKeyToID(args[1], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		// ... validate Element has mentioned Transformation
+		bodybytes, status, curlcmd, err := ce.GetTransformationsPerElement(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println("Unable to retrieve Transformations for Element", err.Error())
+			os.Exit(1)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 result", status)
+			fmt.Printf("%s\n", bodybytes)
+			os.Exit(1)
+		}
+		eltx := make(map[string]ce.Transformation)
+		err = json.Unmarshal(bodybytes, &eltx)
+		if err != nil {
+			fmt.Println("Unable to parse Element's Transformations", err.Error())
+			os.Exit(1)
+		}
+		found := false
+		for k := range eltx {
+			if k == args[0] {
+				found = true
+			}
+		}
+		if !found {
+			fmt.Printf("Cannot find Transformation associated with Resource %s on Element %s\n", args[0], args[1])
+			os.Exit(1)
+		}
+
+		// Delete the Transformation from the Element
+		bodybytes, status, curlcmd2, err := ce.DeleteTransformationAssociation(profilemap["base"], profilemap["auth"], args[0], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println("Unable to delete Transformation association", err.Error())
+			os.Exit(1)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 HTTP code")
+			fmt.Printf("%s\n", bodybytes)
+		}
+
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+			log.Println(curlcmd2)
+		}
+
+		fmt.Printf("%s Transformation association from %s deleted", args[0], args[1])
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(transformationsCmd)
 
@@ -139,4 +296,6 @@ func init() {
 	//transformationsCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 	transformationsCmd.AddCommand(listTransformationsCmd)
 	listTransformationsCmd.PersistentFlags().BoolVarP(&withElementAssociations, "with-elements", "", false, "show Element associations")
+	transformationsCmd.AddCommand(associateTransformationCmd)
+	transformationsCmd.AddCommand(deleteTransformationCmd)
 }
