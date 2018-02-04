@@ -214,6 +214,79 @@ var listTransformationsCmd = &cobra.Command{
 	},
 }
 
+var deleteTransformationCmd = &cobra.Command{
+	Use:   "delete <resource> <element>",
+	Short: "Delete a Transformation association",
+	Long:  "Delete a Transformation association from an Element given a Resource name and Element Key or ID",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// So many guards
+
+		// ... for arg length
+		if len(args) < 2 {
+			fmt.Println("Please provide both a Resource name and an Element key|id")
+			os.Exit(1)
+		}
+		// ... validate Element ID
+		elementid, err := ce.ElementKeyToID(args[1], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		// ... validate Element has mentioned Transformation
+		bodybytes, status, curlcmd, err := ce.GetTransformationsPerElement(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println("Unable to retrieve Transformations for Element", err.Error())
+			os.Exit(1)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 result", status)
+			fmt.Printf("%s\n", bodybytes)
+			os.Exit(1)
+		}
+		eltx := make(map[string]ce.Transformation)
+		err = json.Unmarshal(bodybytes, &eltx)
+		if err != nil {
+			fmt.Println("Unable to parse Element's Transformations", err.Error())
+			os.Exit(1)
+		}
+		found := false
+		for k := range eltx {
+			if k == args[0] {
+				found = true
+			}
+		}
+		if !found {
+			fmt.Printf("Cannot find Transformation associated with Resource %s on Element %s\n", args[0], args[1])
+			os.Exit(1)
+		}
+
+		// Delete the Transformation from the Element
+		bodybytes, status, curlcmd2, err := ce.DeleteTransformationAssociation(profilemap["base"], profilemap["auth"], args[0], strconv.Itoa(elementid))
+		if err != nil {
+			fmt.Println("Unable to delete Transformation association", err.Error())
+			os.Exit(1)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 HTTP code")
+			fmt.Printf("%s\n", bodybytes)
+		}
+
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+			log.Println(curlcmd2)
+		}
+
+		fmt.Printf("%s Transformation association from %s deleted", args[0], args[1])
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(transformationsCmd)
 
@@ -224,4 +297,5 @@ func init() {
 	transformationsCmd.AddCommand(listTransformationsCmd)
 	listTransformationsCmd.PersistentFlags().BoolVarP(&withElementAssociations, "with-elements", "", false, "show Element associations")
 	transformationsCmd.AddCommand(associateTransformationCmd)
+	transformationsCmd.AddCommand(deleteTransformationCmd)
 }
