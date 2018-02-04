@@ -10,9 +10,9 @@ IMPROVEMENTS:
 
 NEW FEATURES
 
-* `transformations` top level command, with one subcommand, `transformations list`
-* New transformations subcommands, `elements transformations <id>` and `instances transformations <id>` command, to list the Transformations associated with an Element ID/key or Element Instance ID, respectively
-* `molecules export` now exports Transformations per Element into a file in the created `transformations` directory
+* `transformations` top level command, with one subcommand, `transformations list` ([#17](https://github.com/ghchinoy/cectl/issues/17))
+* New transformations subcommands, `elements transformations <id>` and `instances transformations <id>` command, to list the Transformations associated with an Element ID/key or Element Instance ID, respectively ([#17](https://github.com/ghchinoy/cectl/issues/17))
+* `molecules export` now exports Transformations per Element into a file in the created `transformations` directory ([#17](https://github.com/ghchinoy/cectl/issues/17))
 * `profiles list` has a new flag to output a table of profiles available, `-l` or `--long`
 
 BUG FIXES
