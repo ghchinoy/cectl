@@ -68,6 +68,7 @@ var deleteResourceCmd = &cobra.Command{
 		if statuscode != 200 {
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
+			return
 		}
 		// handle global options, json
 		if outputJSON {
@@ -117,6 +118,49 @@ var listResourcesCmd = &cobra.Command{
 			fmt.Println("Unable to render resources", err.Error())
 		}
 
+	},
+}
+
+// copyResourceCmd is the command to copy a resource to another
+var copyResourceCmd = &cobra.Command{
+	Use:   "copy <resource> <name>",
+	Short: "Copy a resource to another name",
+	Long:  "Copy an existing resource to another name",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if len(args) < 2 {
+			fmt.Println("must supply a Common Resource name and new name for the copy")
+			cmd.Help()
+			os.Exit(1)
+		}
+
+		bodybytes, status, curlcmd, err := ce.CopyResource(
+			profilemap["base"],
+			profilemap["auth"],
+			args[0], // resource
+			args[1], // new name
+		)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		if status != 200 {
+			fmt.Println("Non-200 status:", status)
+			return
+		}
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		fmt.Printf("A copy of %s has been created, named %s\n", args[0], args[1])
 	},
 }
 
@@ -303,4 +347,5 @@ func init() {
 	resourcesCmd.AddCommand(addResourceCmd)
 	resourcesCmd.AddCommand(importResourceCmd)
 	resourcesCmd.AddCommand(deleteResourceCmd)
+	resourcesCmd.AddCommand(copyResourceCmd)
 }
