@@ -6,6 +6,21 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.7.1
+
+NEW FEATURES:
+
+* `resources copy <resource> <new_resource>` with optional flag `--deep` to also associate new resource Transformations with Element; addresses [#16](https://github.com/ghchinoy/cectl/issues/16) 
+* `transformations delete <resource> <element>`, to delete a Transformation association from an Element, which is a prerequisite if deleting a Resource (existing capability in `resources delete <resource>`
+* incomplete `transformations associate <resource> <element>` as there's still more discussion ([#20](https://github.com/ghchinoy/cectl/issues/20)) 
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* copyright statement added to transformations.go source file
+* deleting an resource would continue even if it resulted in a non-200 response, resulting in a confusing output 
+
 ## v0.7.0
 
 NEW FEATURES
