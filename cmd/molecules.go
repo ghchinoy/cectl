@@ -41,7 +41,7 @@ var moleculesCmd = &cobra.Command{
 
 // exportCmd is the command to export assets
 var exportCmd = &cobra.Command{
-	Use:   "export [formulas|resources|all (default)]",
+	Use:   "export [formulas|resources|transformations|all (default)]",
 	Short: "exports assets from the platform",
 	Long:  "Exports a set of assets",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -53,14 +53,17 @@ var exportCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		scope := []string{"formulas", "resources"}
+		scope := []string{"formulas", "resources", "transformations"}
 		if len(args) > 0 {
-			// args[0] should be either "formulas" | "resources"
+			// args[0] should be either "formulas" | "resources" | "transformations"
 			if args[0] == "formulas" {
 				scope = []string{"formulas"}
 			}
 			if args[0] == "resources" {
 				scope = []string{"resources"}
+			}
+			if args[0] == "transformations" {
+				scope = []string{"transformations"}
 			}
 		}
 
@@ -79,9 +82,96 @@ var exportCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
+			if v == "transformations" {
+				err = ExportAllTransformationsToDir(profilemap["base"], profilemap["auth"], "./transformations")
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+			}
 		}
 
 	},
+}
+
+// ExportAllTransformationsToDir creates a directory given a dirname and iterates through all
+// Elements with associated transformations and creates a single JSON file
+func ExportAllTransformationsToDir(base, auth string, dirname string) error {
+
+	err := os.MkdirAll(dirname, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	log.Println("Finding all Transformations")
+
+	// Get all available transformations
+	log.Println("Getting all available Transformations")
+	bodybytes, status, _, err := ce.GetTransformations(base, auth)
+	if err != nil {
+		log.Println("Couldn't find any Transformations")
+		return err
+	}
+	if status != 200 {
+		log.Println("No Transformations present")
+		return nil
+	}
+
+	log.Println("Assembling unique Element keys")
+	transformationnames := make(map[string]ce.Transformation)
+	err = json.Unmarshal(bodybytes, &transformationnames)
+	var elementkeys []string
+	temp := make(map[string]bool)
+	for k := range transformationnames {
+		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
+		if err != nil {
+			break
+		}
+		if status != 200 {
+			break
+		}
+		var associations []ce.AccountElement
+		err = json.Unmarshal(bodybytes, &associations)
+		if err != nil {
+			break
+		}
+		for _, v := range associations {
+			//fmt.Printf("%s: %s\n", k, v.Element.Key)
+			if _, ok := temp[v.Element.Key]; !ok {
+				temp[v.Element.Key] = true
+				elementkeys = append(elementkeys, v.Element.Key)
+			}
+		}
+	}
+
+	log.Println("Exporting Transformations per Element")
+	for _, v := range elementkeys {
+		transforms := make(map[string]ce.Transformation)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+		if err != nil {
+			break
+		}
+		if status != 200 {
+			break
+		}
+		err = json.Unmarshal(bodybytes, &transforms)
+
+		for n, t := range transforms {
+			filename := fmt.Sprintf("%s_%s.transformation.json", v, n)
+			data, err := json.Marshal(t)
+			if err != nil {
+				log.Println("Error creating []byte from ce.Transform object")
+				break
+			}
+			log.Printf("Exporting %s", filename)
+			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), data, 0644)
+			if err != nil {
+				log.Println("Error writing file")
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // ExportAllFormulasToDir creates a directory given and exports all Formula JSON files

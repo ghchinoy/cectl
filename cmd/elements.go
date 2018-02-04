@@ -23,6 +23,7 @@ import (
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -34,6 +35,82 @@ var elementsCmd = &cobra.Command{
 	Use:   "elements",
 	Short: "Manage Elements on the Platform",
 	Long:  `Manage Elements on the Platform`,
+}
+
+// transformationsForElementCmd is the command to list Transformations associated with an Element
+var transformationsForElementCmd = &cobra.Command{
+	Use:   "transformations <id|key>",
+	Short: "Show Transformations for the Element",
+	Long:  "Given the Element key or ID, show associated Transformations",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		bodybytes, statuscode, curlcmd, err := ce.GetTransformationsPerElement(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid))
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+			log.Printf("%s", bodybytes)
+			os.Exit(1)
+		}
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		txs := make(map[string]ce.Transformation)
+		err = json.Unmarshal(bodybytes, &txs)
+		if err != nil {
+			fmt.Println("Can't parse JSON response", err.Error())
+			os.Exit(1)
+		}
+		data := [][]string{}
+		for k, v := range txs {
+			var script bool // determine if js exists for the Transformation
+			if len(v.Script.Body) > 0 {
+				script = true
+			}
+			data = append(data, []string{
+				k,
+				v.VendorName,
+				v.Level,
+				fmt.Sprintf("%v", len(v.Fields)),
+				fmt.Sprintf("%v", len(v.Configuration)),
+				fmt.Sprintf("%v", script),
+				fmt.Sprintf("%v", v.IsLegacy),
+				v.StartDate,
+			})
+		}
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Resource", "Vendor", "Level", "# Fields", "# Configs", "Script", "Legacy", "Start Date"})
+		table.SetBorder(false)
+		table.AppendBulk(data)
+		table.Render()
+	},
 }
 
 // importElementCmd is a command to import an Element json
@@ -434,6 +511,7 @@ func init() {
 	elementsCmd.AddCommand(elementExportCmd)
 	elementsCmd.AddCommand(importElementCmd)
 	//elementsCmd.AddCommand(elementModelValidation)
+	elementsCmd.AddCommand(transformationsForElementCmd)
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub
