@@ -67,7 +67,7 @@ var deleteResourceCmd = &cobra.Command{
 		// handle non 200
 		if statuscode != 200 {
 			log.Printf("HTTP Error: %v\n", statuscode)
-			// handle this nicely, show error description
+			log.Printf("%s", bodybytes)
 			return
 		}
 		// handle global options, json
@@ -121,7 +121,10 @@ var listResourcesCmd = &cobra.Command{
 	},
 }
 
+var deepCopy bool
+
 // copyResourceCmd is the command to copy a resource to another
+// if flag --deep is given, also copy transformations
 var copyResourceCmd = &cobra.Command{
 	Use:   "copy <resource> <name>",
 	Short: "Copy a resource to another name",
@@ -161,7 +164,53 @@ var copyResourceCmd = &cobra.Command{
 			return
 		}
 		fmt.Printf("A copy of %s has been created, named %s\n", args[0], args[1])
+		if deepCopy {
+			err := copyTransformations(profilemap["base"], profilemap["auth"], args[0], args[1])
+			if err != nil {
+				fmt.Println("Unable to copy transformations", err.Error())
+				return
+			}
+		}
 	},
+}
+
+func copyTransformations(base, auth string, from, to string) error {
+	bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, from)
+	if err != nil {
+		return err
+	}
+	if status != 200 {
+		return fmt.Errorf("HTTP Status Code %v", status)
+	}
+	var associations []ce.AccountElement
+	err = json.Unmarshal(bodybytes, &associations)
+	if err != nil {
+		return err
+	}
+	for _, v := range associations {
+		txbytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v.Element.Key)
+		if err != nil {
+			return err
+		}
+		if status != 200 {
+			return fmt.Errorf("HTTP Status Code retrieving Element %s Transformations: %v", v.Element.Key, status)
+		}
+		txs := make(map[string]ce.Transformation)
+		err = json.Unmarshal(txbytes, &txs)
+		transformation := txs[from]
+		transformation.ObjectName = to
+		_, status, _, err = ce.AssociateTransformationWithElement(base, auth, v.Element.Key, transformation)
+		if err != nil {
+			return err
+		}
+		//log.Println(curlcmd)
+		if status != 200 {
+			return fmt.Errorf("HTTP Status Code associating Element %s with new Transformation: %v", v.Element.Key, status)
+		}
+		log.Printf("Associated Transformation for Resource %s with Element %s", to, v.Element.Key)
+	}
+
+	return nil
 }
 
 // addResourceCmd is deprecated, please use importResourceCmd
@@ -348,4 +397,5 @@ func init() {
 	resourcesCmd.AddCommand(importResourceCmd)
 	resourcesCmd.AddCommand(deleteResourceCmd)
 	resourcesCmd.AddCommand(copyResourceCmd)
+	copyResourceCmd.Flags().BoolVarP(&deepCopy, "deep", "", false, "copy transformations along with resource")
 }
