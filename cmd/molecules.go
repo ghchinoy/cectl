@@ -221,7 +221,7 @@ func ExportAllResourcesToDir(base, auth string, dirname string) error {
 	}
 	for _, r := range resources {
 
-		resourceBytes, _, _, err := ce.GetResourceDefinition(base, auth, r.Name)
+		resourceBytes, _, _, err := ce.GetResourceDefinition(base, auth, r.Name, false)
 		if err != nil {
 			log.Println(err.Error())
 			break

@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
@@ -318,6 +319,8 @@ var importResourceCmd = &cobra.Command{
 	Run:   importImplementation,
 }
 
+var showMoreResourceDetail bool
+
 var defineResourceCmd = &cobra.Command{
 	Use:   "definition",
 	Short: "detailed definition of a resource",
@@ -337,7 +340,7 @@ var defineResourceCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		bodybytes, status, curlcmd, err := ce.GetResourceDefinition(profilemap["base"], profilemap["auth"], args[0])
+		bodybytes, status, curlcmd, err := ce.GetResourceDefinition(profilemap["base"], profilemap["auth"], args[0], showMoreResourceDetail)
 
 		if showCurl {
 			//curlcmd, _ := http2curl.GetCurlCommand(req)
@@ -365,21 +368,43 @@ var defineResourceCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("Common Resource Object: %s\n", args[0])
-		fmt.Printf("Field levels: %s\n", cro.Level)
 		data := [][]string{}
-		for _, v := range cro.Fields {
-			data = append(data, []string{
-				v.Path,
-				v.Type,
-			})
-		}
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Path", "Type"})
+
+		if showMoreResourceDetail {
+			fmt.Printf("Common Resource Object: %s\n", args[0])
+			fmt.Printf("Element Instances: %v\n", cro.ElementInstanceIDs)
+
+			for _, v := range cro.Fields {
+				data = append(data, []string{
+					v.Path,
+					v.Type,
+					v.AssociatedLevel,
+					strconv.Itoa(v.AssociatedID),
+				})
+			}
+			table.SetHeader([]string{"Path", "Type", "Level", "ID"})
+
+		} else {
+			fmt.Printf("Common Resource Object: %s\n", args[0])
+			fmt.Printf("Field levels: %s\n", cro.Level)
+
+			for _, v := range cro.Fields {
+				data = append(data, []string{
+					v.Path,
+					v.Type,
+				})
+			}
+
+			table.SetHeader([]string{"Path", "Type"})
+
+		}
+
 		table.SetBorder(false)
 		table.SetColWidth(40)
 		table.AppendBulk(data)
 		table.Render()
+
 	},
 }
 
@@ -393,6 +418,7 @@ func init() {
 	resourcesCmd.AddCommand(listResourcesCmd)
 	listResourcesCmd.Flags().BoolVarP(&withInstances, "with-instances", "i", false, "show mapped instances")
 	resourcesCmd.AddCommand(defineResourceCmd)
+	defineResourceCmd.Flags().BoolVarP(&showMoreResourceDetail, "details", "d", false, "show even more details")
 	resourcesCmd.AddCommand(addResourceCmd)
 	resourcesCmd.AddCommand(importResourceCmd)
 	resourcesCmd.AddCommand(deleteResourceCmd)

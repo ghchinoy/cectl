@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "938343dbfbc18d9dc5f10e3455775468836dc68c"
+  revision = "3865e65120554ee21a5bb9f442bdc3a1c429b90c"
 
 [[projects]]
   branch = "master"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "3a7eb146bae5ebf9be598570234cde56c82d16cc"
+  revision = "93959269ad99e80983c9ba742a7e01203a4c0e4f"
 
 [[projects]]
   branch = "master"
@@ -107,7 +107,7 @@
   branch = "master"
   name = "golang.org/x/text"
   packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
+  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
 
 [[projects]]
   branch = "v2"
