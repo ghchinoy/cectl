@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.7.2
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* A new flag to provide more details on the definition of a Resource, `resources definition -d` 
+
 # v0.7.1
 
 NEW FEATURES:
