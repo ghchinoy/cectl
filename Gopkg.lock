@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "3865e65120554ee21a5bb9f442bdc3a1c429b90c"
+  revision = "457ea1d7ba03652d6115657caf7baabfb9bc9664"
 
 [[projects]]
   branch = "master"
@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
-  revision = "d419a98cdbed11a922bf76f257b7c4be79b50e73"
-  version = "v1.7.4"
+  revision = "a8e9fa9ffe534206df1daaa7e9d5e82ca23db7e0"
+  version = "v1.7.5"
 
 [[projects]]
   name = "github.com/mattn/go-runewidth"
@@ -62,10 +62,10 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/spf13/afero"
   packages = [".","mem"]
-  revision = "bb8f1927f2a9d3ab41c9340aa034f6b803f4359c"
-  version = "v1.0.2"
+  revision = "bbf41cb36dffe15dff5bf7e18c447801e7ffe163"
 
 [[projects]]
   name = "github.com/spf13/cast"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "93959269ad99e80983c9ba742a7e01203a4c0e4f"
+  revision = "be77323fc05148ef091e83b3866c0d47c8e74a8b"
 
 [[projects]]
   branch = "master"

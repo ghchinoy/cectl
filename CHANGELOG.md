@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.8.0
+
+NEW FEATURES:
+
+BUG FIXES:
+
+* Critical fix in Formula definition, improper capitialization of configuration keys results in invalid Formula json
+
+IMPROVEMENTS:
+
 # v0.7.2
 
 NEW FEATURES:
@@ -14,7 +24,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
-* A new flag to provide more details on the definition of a Resource, `resources definition -d` 
+* A new flag to provide more details on the definition of a Resource, `resources definition <resource> -d` 
 
 # v0.7.1
 
