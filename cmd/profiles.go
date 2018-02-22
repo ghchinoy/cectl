@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -130,12 +132,25 @@ var listProfilesCmd = &cobra.Command{
 					fmt.Sprintf("%s", v["base"]),
 				})
 			}
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"profile", "base url"})
-			table.SetBorder(false)
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.AppendBulk(data)
-			table.Render()
+			if outputCSV {
+				w := csv.NewWriter(os.Stdout)
+				for _, record := range data {
+					if err := w.Write(record); err != nil {
+						log.Fatalln("error writing record to csv:", err)
+					}
+				}
+				w.Flush()
+				if err := w.Error(); err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader([]string{"profile", "base url"})
+				table.SetBorder(false)
+				table.SetAlignment(tablewriter.ALIGN_LEFT)
+				table.AppendBulk(data)
+				table.Render()
+			}
 			os.Exit(0)
 		}
 		posn := sort.SearchStrings(profiles, "profile")
@@ -248,6 +263,7 @@ func init() {
 
 	profilesCmd.AddCommand(listProfilesCmd)
 	listProfilesCmd.PersistentFlags().BoolVarP(&longProfile, "long", "l", false, "show long profile")
+	listProfilesCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 	profilesCmd.AddCommand(addProfileCmd)
 	profilesCmd.AddCommand(setProfileCmd)
 

@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
@@ -186,31 +188,58 @@ var listTransformationsCmd = &cobra.Command{
 		data := [][]string{}
 		for _, k := range keys {
 			v := txs[k]
+			var fieldList string
+			if len(v.Fields) > 0 {
+				var fields []string
+				for _, f := range v.Fields {
+					fields = append(fields, f.Path)
+				}
+				fieldList = strings.Join(fields[:], ", ")
+				fieldList = "[" + fieldList + "]"
+			}
 			if withElementAssociations {
 				data = append(data, []string{
 					k,
 					v.Level,
 					fmt.Sprintf("%v", len(v.Fields)),
-					fmt.Sprintf("%v %s", len(elementAssociations[k]), elementAssociations[k]),
+					fieldList,
+					fmt.Sprintf("%v", len(elementAssociations[k])),
+					fmt.Sprintf("%s", elementAssociations[k]),
 				})
 			} else {
 				data = append(data, []string{
 					k,
 					v.Level,
 					fmt.Sprintf("%v", len(v.Fields)),
+					fieldList,
 				})
 			}
 		}
-		table := tablewriter.NewWriter(os.Stdout)
-		//table.SetHeader([]string{"Resource", "Vendor", "Level", "# Fields", "# Configs", "Legacy", "Start Date"})
-		if withElementAssociations {
-			table.SetHeader([]string{"Resource", "Level", "# Fields", "Elements"})
+
+		if outputCSV {
+			w := csv.NewWriter(os.Stdout)
+			for _, record := range data {
+				if err := w.Write(record); err != nil {
+					log.Fatalln("error writing record to csv:", err)
+				}
+			}
+			w.Flush()
+			if err := w.Error(); err != nil {
+				log.Fatal(err)
+			}
 		} else {
-			table.SetHeader([]string{"Resource", "Level", "# Fields"})
+
+			table := tablewriter.NewWriter(os.Stdout)
+			//table.SetHeader([]string{"Resource", "Vendor", "Level", "# Fields", "# Configs", "Legacy", "Start Date"})
+			if withElementAssociations {
+				table.SetHeader([]string{"Resource", "Level", "#", "Fields", "#", "Elements"})
+			} else {
+				table.SetHeader([]string{"Resource", "Level", "#", "Fields"})
+			}
+			table.SetBorder(false)
+			table.AppendBulk(data)
+			table.Render()
 		}
-		table.SetBorder(false)
-		table.AppendBulk(data)
-		table.Render()
 	},
 }
 
@@ -293,9 +322,9 @@ func init() {
 	transformationsCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	transformationsCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	transformationsCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
-	//transformationsCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 	transformationsCmd.AddCommand(listTransformationsCmd)
 	listTransformationsCmd.PersistentFlags().BoolVarP(&withElementAssociations, "with-elements", "", false, "show Element associations")
+	listTransformationsCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 	transformationsCmd.AddCommand(associateTransformationCmd)
 	transformationsCmd.AddCommand(deleteTransformationCmd)
 }
