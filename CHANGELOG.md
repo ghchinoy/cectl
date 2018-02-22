@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.8.1
+
+NEW FEATURES:
+
+* Adds csv output for profiles and transformations with `--csv` flag
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.8.0
 
 NEW FEATURES:
