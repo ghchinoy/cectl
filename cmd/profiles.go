@@ -91,25 +91,29 @@ var listProfilesCmd = &cobra.Command{
 		if len(args) > 0 {
 			profile = args[0]
 		}
-		fmt.Printf("%7s: %s", "profile", profile)
-		if viper.IsSet(profile) {
-			p := viper.GetStringMap(profile)
 
-			if val, ok := p["label"]; ok {
-				fmt.Printf(" (%s)\n", val)
-			} else {
-				fmt.Println()
-			}
+		if !(outputCSV) {
+			fmt.Printf("%7s: %s", "profile", profile)
+			if viper.IsSet(profile) {
+				p := viper.GetStringMap(profile)
 
-			for k, v := range p {
-				if k == "base" {
-					fmt.Printf("%7s: %s\n", k, v)
+				if val, ok := p["label"]; ok {
+					fmt.Printf(" (%s)\n", val)
+				} else {
+					fmt.Println()
 				}
+
+				for k, v := range p {
+					if k == "base" {
+						fmt.Printf("%7s: %s\n", k, v)
+					}
+				}
+			} else {
+				fmt.Printf("No %s profile exists in config file %s.", profile, cfgFile)
 			}
-		} else {
-			fmt.Printf("No %s profile exists in config file %s.", profile, cfgFile)
+			fmt.Println()
 		}
-		fmt.Println()
+
 		settings := viper.AllSettings()
 		var profiles []string
 		for k := range settings {
@@ -118,7 +122,9 @@ var listProfilesCmd = &cobra.Command{
 		sort.Strings(profiles)
 		if longProfile {
 			data := [][]string{}
-			fmt.Printf("%v profiles\n", len(profiles))
+			if !(outputCSV) {
+				fmt.Printf("%v profiles\n", len(profiles))
+			}
 			for _, k := range profiles {
 				if k == "profile" {
 					break
