@@ -6,6 +6,18 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.9.0
+
+NEW FEATURES:
+
+* Adds combined vdr (common object + transforms) file with `--combined` flag for `molecules export`; speed of `--combined` flag is a known issue
+
+BUG FIXES:
+
+* Corrects csv flag outputting only profile data in `profiles list --csv`
+
+IMPROVEMENTS:
+
 # v0.8.1
 
 NEW FEATURES:
