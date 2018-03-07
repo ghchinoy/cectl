@@ -29,6 +29,7 @@ import (
 
 var (
 	profileSource, profileTarget string
+	exportCombined               bool
 )
 
 // moleculesCmd is the top level command for managing integration assets
@@ -59,12 +60,33 @@ var exportCmd = &cobra.Command{
 			if args[0] == "formulas" {
 				scope = []string{"formulas"}
 			}
-			if args[0] == "resources" {
-				scope = []string{"resources"}
+			if exportCombined { // exportCombined combines both resources & transformations
+				scope = []string{"resources", "transformations"}
+			} else {
+				if args[0] == "resources" {
+					scope = []string{"resources"}
+				}
+				if args[0] == "transformations" {
+					scope = []string{"transformations"}
+				}
 			}
-			if args[0] == "transformations" {
-				scope = []string{"transformations"}
+		}
+
+		if exportCombined {
+			vdr, err := CombineVirtualDataResourcesForExport(profilemap["base"], profilemap["auth"])
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
+			vdrbytes, err := json.Marshal(vdr)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+			//fmt.Printf("%s", vdrbytes)
+			name := fmt.Sprintf("%s.combined.vdr.json", strings.Replace(profile, " ", "", -1))
+			fmt.Printf("Exporting '%s' to %s/%s\n", "combined vdr", ".", name)
+			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", ".", name), vdrbytes, 0644)
 		}
 
 		for _, v := range scope {
@@ -75,23 +97,121 @@ var exportCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
-			if v == "resources" {
-				err = ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
-				if err != nil {
-					fmt.Println(err.Error())
-					os.Exit(1)
+			if !exportCombined {
+				if v == "resources" {
+					err = ExportAllResourcesToDir(profilemap["base"], profilemap["auth"], "./resources")
+					if err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
 				}
-			}
-			if v == "transformations" {
-				err = ExportAllTransformationsToDir(profilemap["base"], profilemap["auth"], "./transformations")
-				if err != nil {
-					fmt.Println(err.Error())
-					os.Exit(1)
+				if v == "transformations" {
+					err = ExportAllTransformationsToDir(profilemap["base"], profilemap["auth"], "./transformations")
+					if err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
 				}
 			}
 		}
 
 	},
+}
+
+// AllVDR is the combination of Resources and Transformations
+type AllVDR struct {
+	ObjectDefinitions map[string]ce.CommonResource `json:"objectDefinitions"`
+	Transformations   interface{}                  `json:"transformations"`
+}
+
+// CombineVirtualDataResourcesForExport creates a single JSON object comprising
+// both the Resources and Transformations for the account.
+// Two top level keys of the JSON object are: objectDefinitions for Resources
+// and transformations for Transformations
+// This is very slow.
+func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
+	var vdr AllVDR
+
+	// todo: Gather Resources and Gather Transformations, goroutines, each
+
+	// Gather Resources
+	objs := make(map[string]ce.CommonResource)
+	resourcesListBytes, _, _, err := ce.ResourcesList(base, auth)
+	if err != nil {
+		return vdr, err
+	}
+	var resources []ce.CommonResource
+	err = json.Unmarshal(resourcesListBytes, &resources)
+	if err != nil {
+		return vdr, err
+	}
+	for _, r := range resources { // todo: goroutine
+		//log.Println("exporting", r.Name)
+		resourceBytes, _, _, err := ce.GetResourceDefinition(base, auth, r.Name, false)
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+		var obj ce.CommonResource
+		err = json.Unmarshal(resourceBytes, &obj)
+		objs[r.Name] = obj
+	}
+	vdr.ObjectDefinitions = objs
+
+	// Gather Transformations
+	txs := make(map[string]map[string]ce.Transformation)
+	// Get all available transformations
+	log.Println("Getting all available Transformations")
+	bodybytes, status, _, err := ce.GetTransformations(base, auth)
+	if err != nil {
+		log.Println("Couldn't find any Transformations")
+		return vdr, nil
+	}
+	if status != 200 {
+		log.Println("No Transformations present")
+		return vdr, nil
+	}
+	transformationnames := make(map[string]ce.Transformation)
+	err = json.Unmarshal(bodybytes, &transformationnames)
+	var elementkeys []string
+	temp := make(map[string]bool)
+	for k := range transformationnames {
+		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
+		if err != nil {
+			break
+		}
+		if status != 200 {
+			break
+		}
+		var associations []ce.AccountElement
+		err = json.Unmarshal(bodybytes, &associations)
+		if err != nil {
+			break
+		}
+		for _, v := range associations {
+			//fmt.Printf("%s: %s\n", k, v.Element.Key)
+			if _, ok := temp[v.Element.Key]; !ok {
+				temp[v.Element.Key] = true
+				elementkeys = append(elementkeys, v.Element.Key)
+			}
+		}
+	}
+	for _, v := range elementkeys {
+		transforms := make(map[string]ce.Transformation)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+		if err != nil {
+			break
+		}
+		if status != 200 {
+			break
+		}
+
+		err = json.Unmarshal(bodybytes, &transforms)
+		txs[v] = transforms
+	}
+	vdr.Transformations = txs
+
+	return vdr, nil
 }
 
 // ExportAllTransformationsToDir creates a directory given a dirname and iterates through all
@@ -220,13 +340,12 @@ func ExportAllResourcesToDir(base, auth string, dirname string) error {
 		return err
 	}
 	for _, r := range resources {
-
 		resourceBytes, _, _, err := ce.GetResourceDefinition(base, auth, r.Name, false)
 		if err != nil {
 			log.Println(err.Error())
 			break
 		}
-		name := fmt.Sprintf("%s.cro.json", r.Name)
+		name := fmt.Sprintf("%s.obj.json", r.Name)
 		fmt.Printf("Exporting %s to %s/%s\n", r.Name, dirname, name)
 		err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, name), resourceBytes, 0644)
 	}
@@ -271,6 +390,7 @@ func init() {
 	moleculesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 
 	moleculesCmd.AddCommand(exportCmd)
+	exportCmd.PersistentFlags().BoolVar(&exportCombined, "combined", false, "export resources+transformations as one file")
 	moleculesCmd.AddCommand(cloneCmd)
 	cloneCmd.PersistentFlags().StringVar(&profileSource, "from", "default", "source profile name")
 	cloneCmd.PersistentFlags().StringVar(&profileTarget, "to", "", "target profile name")
