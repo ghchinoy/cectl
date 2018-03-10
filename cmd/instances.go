@@ -434,6 +434,96 @@ If no object definitions exist, then this will result in an error response.`,
 	},
 }
 
+var instanceEnableCmd = &cobra.Command{
+	Use:   "enable <ID>",
+	Short: "Enable an Element Instance by ID",
+	Long:  "Enables an Element Instance, given an ID",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Instance ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID ")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+		// Get schema definition for operation
+		bodybytes, statuscode, curlcmd, err := ce.EnableElementInstance(profilemap["base"], profilemap["auth"], args[0], true, debug)
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+			fmt.Printf("%s\n", bodybytes)
+		}
+		if statuscode == 200 {
+			fmt.Println("Instance enabled.")
+		}
+	},
+}
+
+var instanceDisableCmd = &cobra.Command{
+	Use:   "disable <ID>",
+	Short: "Disable an Element Instance by ID",
+	Long:  "Disables an Element Instance, given an ID",
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Instance ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Instance ID ")
+			return
+		}
+		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
+			fmt.Println("Please provide an Instance ID that is an integer")
+			return
+		}
+		// Get schema definition for operation
+		bodybytes, statuscode, curlcmd, err := ce.EnableElementInstance(profilemap["base"], profilemap["auth"], args[0], false, debug)
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+			fmt.Printf("%s\n", bodybytes)
+		}
+		if statuscode == 200 {
+			fmt.Println("Instance disabled.")
+		}
+	},
+}
+
 var instanceOperationDefinitionCmd = &cobra.Command{
 	Use:   "operation [ID] [operationName]",
 	Short: "Show operation schema definition",
@@ -506,8 +596,11 @@ func init() {
 	instancesCmd.AddCommand(instanceDefinitionsCmd)
 	instancesCmd.AddCommand(testInstancesCmd)
 	instancesCmd.AddCommand(deleteElementInstanceCmd)
+	instancesCmd.AddCommand(instanceEnableCmd)
+	instancesCmd.AddCommand(instanceDisableCmd)
 
 	instancesCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	instancesCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	instancesCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
+	instancesCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "print debug info")
 }
