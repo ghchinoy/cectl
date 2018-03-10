@@ -489,7 +489,8 @@ enabling or disabling Events`,
 			os.Exit(1)
 		}
 		if statuscode == 200 {
-			fmt.Printf("Instance %s/%s events: %v.\n", instance.Element.Key, instance.Name, instance.Configuration.EventNotificationEnabled)
+			ce.OutputInstanceDetails(bodybytes)
+			//fmt.Printf("Instance %s/%s events: %v.\n", instance.Element.Key, instance.Name, instance.Configuration.EventNotificationEnabled)
 		}
 	},
 }
