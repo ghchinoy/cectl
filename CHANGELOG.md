@@ -6,6 +6,18 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.10.0
+
+NEW FEATURES:
+
+* `instances enable <instance_id>` - to enable an Element Instance
+* `instances disable <instance_id>` - to disable an Element Instance
+* `instances events-enable <instance_id> [true|false]` - a single command that enables or disables an Element Instances events, given a true|false (bool) option
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.9.0
 
 NEW FEATURES:
