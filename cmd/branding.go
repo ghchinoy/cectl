@@ -61,6 +61,10 @@ var getBrandingCmd = &cobra.Command{
 			log.Println(curlcmd)
 		}
 		// handle non 200
+		if statuscode == 404 {
+			fmt.Println("No branding on this account.")
+			os.Exit(0)
+		}
 		if statuscode != 200 {
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
@@ -143,6 +147,9 @@ set branding --file <branding.json>
 		// TODO construct JSON object
 		var brandingobject interface{}
 
+		// TODO determine if exsiting branding, add modification to that
+		// TODO if not, utilize ce.DefaultBranding object
+
 		// TODO accomodate for image values by reading in and base64 encodding
 		// attributes: favicon, logo
 		// should be pngs
@@ -196,6 +203,10 @@ var resetBrandingCmd = &cobra.Command{
 			log.Println(curlcmd)
 		}
 		// handle non 200
+		if statuscode == 404 {
+			fmt.Println("No branding on this account.")
+			os.Exit(0)
+		}
 		if statuscode != 200 {
 			log.Printf("HTTP Error: %v\n", statuscode)
 			// handle this nicely, show error description
