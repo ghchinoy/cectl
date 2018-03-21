@@ -28,7 +28,7 @@ import (
 
 // brandingCmd represents the root command for managing Platform brandking
 var brandingCmd = &cobra.Command{
-	Use:   "instances",
+	Use:   "branding",
 	Short: "Manage Branding of the Platform",
 	Long:  `Manage Branding of the Platform`,
 }
@@ -137,11 +137,18 @@ set branding --file <branding.json>
 
 		// check for attribute & value
 		if len(args) < 2 {
-			setBrandingCmd.Usage()
+			cmd.Usage()
 			os.Exit(1)
 		}
 		// TODO construct JSON object
 		var brandingobject interface{}
+
+		// TODO accomodate for image values by reading in and base64 encodding
+		// attributes: favicon, logo
+		// should be pngs
+		if args[0] == "favicon" || args[0] == "logo" {
+
+		}
 
 		// invoke ce branding API with JSON object
 		bodybytes, statuscode, curlcmd, err := ce.SetBranding(profilemap["base"], profilemap["auth"], brandingobject, debug)
@@ -201,6 +208,7 @@ var resetBrandingCmd = &cobra.Command{
 			return
 		}
 		fmt.Printf("%s\n", pretty.Bytes())
+		fmt.Printf("%v\n", statuscode)
 	},
 }
 
