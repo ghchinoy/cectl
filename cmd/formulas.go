@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -25,6 +26,7 @@ import (
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // formulasCmd represents the formulas command
@@ -85,7 +87,14 @@ var importFormulaCmd = &cobra.Command{
 		}
 
 		if outputJSON {
-			fmt.Printf("%s\n", bodybytes)
+			var pretty bytes.Buffer
+			err = json.Indent(&pretty, bodybytes, "", "  ")
+			if err != nil {
+				fmt.Printf("%s\n", bodybytes)
+				return
+			}
+			fmt.Printf("%s\n", pretty.Bytes())
+			//fmt.Printf("%s\n", bodybytes)
 			return
 		}
 
@@ -430,6 +439,72 @@ var listFormulasCmd = &cobra.Command{
 	},
 }
 
+// formulaDetailsCmd represents the formulaDetails command
+var formulaDetailsCmd = &cobra.Command{
+	Use:   "details <id>",
+	Short: "Output details of a Formula template",
+	Long:  `Given a Formula ID, print out details`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		if len(args) < 1 {
+			fmt.Println("must supply an ID of a Formula")
+			os.Exit(1)
+		}
+
+		if !viper.IsSet(profile + ".base") {
+			fmt.Println("Can't find info for profile", profile)
+			os.Exit(1)
+		}
+
+		base := viper.Get(profile + ".base")
+		user := viper.Get(profile + ".user")
+		org := viper.Get(profile + ".org")
+
+		auth := fmt.Sprintf("User %s, Organization %s", user, org)
+
+		bodybytes, statuscode, curlcmd, err := ce.FormulaDetailsAsBytes(args[0], fmt.Sprintf("%s", base), auth)
+		if err != nil {
+			fmt.Println("unable to retrieve formula", err.Error())
+			os.Exit(1)
+		}
+
+		if showCurl {
+			log.Println(curlcmd)
+		}
+
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+
+		if statuscode != 200 {
+			fmt.Println(statuscode)
+			var ficr ce.FormulaInstanceCreationResponse
+			err = json.Unmarshal(bodybytes, &ficr)
+			if err != nil {
+				fmt.Println("Cannot process response, tried error message")
+				os.Exit(1)
+			}
+			fmt.Println(ficr.Message)
+			os.Exit(1)
+		}
+
+		var f ce.Formula
+		err = json.Unmarshal(bodybytes, &f)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		err = ce.FormulaDetailsTableOutput(f)
+		if err != nil {
+			fmt.Println("Unable to render Formula details")
+			os.Exit(1)
+		}
+
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(formulasCmd)
 	formulasCmd.AddCommand(listFormulasCmd)
@@ -437,6 +512,7 @@ func init() {
 	formulasCmd.AddCommand(formulaActivateCmd)
 	formulasCmd.AddCommand(formulaDeactivateCmd)
 	formulasCmd.AddCommand(importFormulaCmd)
+	formulasCmd.AddCommand(formulaDetailsCmd)
 
 	formulasCmd.PersistentFlags().StringVar(&profile, "profile", "default", "profile name")
 	formulasCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
