@@ -97,6 +97,7 @@ set branding <attribute> <value>
 or by specifying a JSON file containing branding configuration like so:
 set branding --file <branding.json>
 `,
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for profile
 		profilemap, err := getAuth(profile)
