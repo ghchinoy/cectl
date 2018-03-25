@@ -56,6 +56,11 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if len(args) < 1 {
+			cmd.Usage()
+			os.Exit(1)
+		}
+
 		// add eventId and/or objectId query params as needed
 		// if formulaExecutionQueryObjectID | formulaExecutionQueryEventID > 0
 		var query []string
