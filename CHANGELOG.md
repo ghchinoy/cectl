@@ -10,6 +10,8 @@ IMPROVEMENTS:
 
 NEW FEATURES:
 
+* Initial release of CE UI Branding management via `branding` command - implemented `get` and `reset`, with `set` available, but hidden, as there's more work to do ([#10](https://github.com/ghchinoy/cectl/issues/10))
+
 BUG FIXES:
 
 * Listing of Formual Instance Executions now enforces requiring of an ID (`executions list <id>`) ([#40](https://github.com/ghchinoy/cectl/issues/40))
