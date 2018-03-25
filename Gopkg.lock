@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "2eac38c31d11602bd456461a3b4c19abc4453036"
+  revision = "83005e3e2ce6c8684119db45affcbbc610e616b3"
 
 [[projects]]
   branch = "master"
@@ -65,7 +65,7 @@
   branch = "master"
   name = "github.com/spf13/afero"
   packages = [".","mem"]
-  revision = "bbf41cb36dffe15dff5bf7e18c447801e7ffe163"
+  revision = "a880a37ed1804d98f64b3b7d58b5e3f8fbf421c4"
 
 [[projects]]
   name = "github.com/spf13/cast"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "c439c4fa093711d42e1b01acb1235b52004753c1"
+  revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
 
 [[projects]]
   branch = "master"
@@ -101,7 +101,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "7ceb54c8418b8f9cdf0177b511d5cbb06e9fae39"
+  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
 
 [[projects]]
   name = "golang.org/x/text"
