@@ -75,12 +75,23 @@ A name for the Formula Instance will be required when using a flag.`,
 		if showCurl {
 			log.Println(curlcmd)
 		}
-
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
-		fmt.Println(status)
+		// handle non 200
+		if status != 200 {
+			log.Printf("HTTP Error: %v\n", status)
+			// handle this nicely, show error description
+			os.Exit(1)
+		}
+		var response map[string]interface{}
+		err = json.Unmarshal(bodybytes, &response)
+		if err != nil {
+			log.Println("Couldn't unmarshal response", err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("Formula Instance ID %v created.\n", response["id"])
 	},
 }
 
