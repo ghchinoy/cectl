@@ -6,6 +6,17 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.11.0
+
+NEW FEATURES:
+
+BUG FIXES:
+
+* Exports of Elements, Transformations, Formulas, and Resource export raw object so as not to conflict with changes to the Platform API, rather than relying on cectl/ce-go's structures ([#26](https://github.com/ghchinoy/cectl/issues/26))
+* Formula imports weren't working as expected. Updated Formula structure ([#32](https://github.com/ghchinoy/cectl/issues/32))
+
+IMPROVEMENTS:
+
 # v0.10.0
 
 NEW FEATURES:
