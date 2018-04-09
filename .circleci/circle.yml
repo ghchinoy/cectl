@@ -4,6 +4,9 @@
 version: 2
 jobs:
   build:
+    branches:
+      only:
+        - circleci
     docker:
       # specify the version
       - image: circleci/golang:1.9
@@ -22,5 +25,6 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
+      - run: go get -d -u github.com/golang/dep
       - run: go get -v -t -d ./...
       - run: go test -v ./...
