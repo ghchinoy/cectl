@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.12.1
+
+NEW FEATURES:
+
+* Convenience output method for CE ROI calculator via flag `--roi` for `elements list` command, outputs JSON in a particular format
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.12.0
 
 NEW FEATURES:

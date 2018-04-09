@@ -222,7 +222,7 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 		if forROI {
 			intbytes, statuscode, _, err := ce.GetIntelligence(profilemap["base"], profilemap["auth"])
 			if err != nil || statuscode != 200 {
-				log.Println("Unable to retrieve intelligence")
+				log.Println("Unable to retrieve intelligence - please check your role")
 				return
 			}
 			roibytes, err := output.ElementsForROICalculator(bodybytes, intbytes)

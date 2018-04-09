@@ -36,11 +36,13 @@ func ElementsForROICalculator(elementData, intelligenceData []byte) ([]byte, err
 
 	for _, v := range elements {
 		if v.Active == true { // only Active
-			if v.Private == false { // only not Private elements
-				m := metadata[v.Key]
-				if m.API.Type != "" { // must have an API type
-					data := ROIData{v.Name, v.Key, v.Hub, m.API.Type, v.Beta, v.Active}
-					outputs = append(outputs, data)
+			if v.Private == false { // only not Private Elements
+				if v.Beta != true { // no Beta Elements
+					m := metadata[v.Key]
+					if m.API.Type != "" { // must have an API type
+						data := ROIData{v.Name, v.Key, v.Hub, m.API.Type, v.Beta, v.Active}
+						outputs = append(outputs, data)
+					}
 				}
 			}
 		}
