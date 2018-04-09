@@ -1,6 +1,8 @@
 # Cloud Elements Control
 
-Unofficial command-line interface for Cloud Elements' Platform APIs.
+Command-line interface for Cloud Elements' Platform APIs.
+
+[![CircleCI](https://circleci.com/gh/ghchinoy/cectl.svg?style=shield)](https://circleci.com/gh/ghchinoy/cectl)
 
 ```
 Cloud Elements control is a CLI that manages the platform
