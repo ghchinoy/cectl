@@ -36,6 +36,8 @@ var instancesCmd = &cobra.Command{
 	Long:  `Manage Element Instances on the Platform`,
 }
 
+var removeBadInstances bool
+
 // testInstanceCmd tests all instances by hitting the /ping endpoint
 var testInstancesCmd = &cobra.Command{
 	Use:   "test",
@@ -67,6 +69,8 @@ var testInstancesCmd = &cobra.Command{
 		// start a thread to check each Instance, aggregating to "results" channel
 		results := make(chan PingCheck)
 
+		var badInstances []int
+
 		for _, i := range instances {
 			pingurl := fmt.Sprintf("%s/hubs/%s/ping", profilemap["base"], i.Element.Hub)
 			ceauthtoken := fmt.Sprintf("%s, Element %s", profilemap["auth"], i.Token)
@@ -75,12 +79,17 @@ var testInstancesCmd = &cobra.Command{
 		}
 
 		// as results come in, print out if necessary
-		var num, bad int // keep track of how many have come in
-		fmt.Printf("Checking %v instances\n", len(instances))
+		var num int // keep track of how many have come in
+		if removeBadInstances {
+			fmt.Printf("Checking %v instances (and removing bad ones)\n", len(instances))
+		} else {
+			fmt.Printf("Checking %v instances\n", len(instances))
+		}
 		for i := range results {
 			if i.StatusCode != 200 {
 				fmt.Printf("%5v %s (%s) %s\n", i.InstanceID, i.ElementName, i.InstanceName, i.Status)
-				bad++
+				badInstances = append(badInstances, i.InstanceID)
+				//bad++
 			}
 			num++
 			// if all expected results are in, close out the channel
@@ -88,7 +97,26 @@ var testInstancesCmd = &cobra.Command{
 				close(results)
 			}
 		}
-		fmt.Printf("%v/%v 200", len(instances)-bad, len(instances))
+		fmt.Printf("%v/%v 200\n", len(instances)-len(badInstances), len(instances))
+		if removeBadInstances {
+			if len(badInstances) < 1 {
+				fmt.Println("No instances to remove.")
+				return
+			}
+			for _, v := range badInstances {
+				b, status, _, err := ce.DeleteElementInstance(profilemap["base"], profilemap["auth"], strconv.Itoa(v))
+				if err != nil {
+					fmt.Println("Can't delete Instance", v, err.Error())
+					return
+				}
+				if status != 200 {
+					fmt.Println("Element Instance couldn't be deleted, http error code", status)
+					fmt.Printf("%s\n", b)
+					return
+				}
+				fmt.Printf("Removed Element Instance %v\n", v)
+			}
+		}
 	},
 }
 
@@ -676,6 +704,7 @@ func init() {
 	instancesCmd.AddCommand(instanceOperationDefinitionCmd)
 	instancesCmd.AddCommand(instanceDefinitionsCmd)
 	instancesCmd.AddCommand(testInstancesCmd)
+	testInstancesCmd.PersistentFlags().BoolVarP(&removeBadInstances, "remove", "", false, "remove bad instances")
 	instancesCmd.AddCommand(deleteElementInstanceCmd)
 	instancesCmd.AddCommand(instanceEnableCmd)
 	instancesCmd.AddCommand(instanceDisableCmd)
