@@ -23,6 +23,7 @@ import (
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
+	"github.com/ghchinoy/cectl/output"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -167,6 +168,8 @@ var importElementCmd = &cobra.Command{
 	},
 }
 
+var forROI bool
+
 // listElementsCmd represents the /elements API
 var listElementsCmd = &cobra.Command{
 	Use:   "list",
@@ -214,6 +217,16 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 		}
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+		if forROI {
+			intbytes, statuscode, _, err := ce.GetIntelligence(profilemap["base"], profilemap["auth"])
+			if err != nil || statuscode != 200 {
+				log.Println("Unable to retrieve intelligence - please check your role")
+				return
+			}
+			roibytes, err := output.ElementsForROICalculator(bodybytes, intbytes)
+			fmt.Printf("%s\n", roibytes)
 			return
 		}
 		// output
@@ -505,6 +518,7 @@ func init() {
 	elementsCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 
 	elementsCmd.AddCommand(listElementsCmd)
+	listElementsCmd.Flags().BoolVarP(&forROI, "roi", "", false, "Output as JSON for ROI calculator")
 	elementsCmd.AddCommand(elementMetadataCmd)
 	elementsCmd.AddCommand(elementDocsCmd)
 	elementsCmd.AddCommand(elementInstancesCmd)
