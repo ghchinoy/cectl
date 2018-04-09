@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.13.0
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* `instances test` now has a flag to remove bad instances, `--remove` ([#1](https://github.com/ghchinoy/cectl/issues/1))
+
 # v0.12.1
 
 NEW FEATURES:
