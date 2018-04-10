@@ -21,7 +21,7 @@
 #  version = "2.4.0"
 
 
-[[constraint]]
+[[override]]
   branch = "master"
   name = "github.com/moul/http2curl"
 
@@ -44,3 +44,6 @@
 [[constraint]]
   name = "github.com/spf13/viper"
   version = "1.0.0"
+
+[[override]]
+  name = "github.com/spf13/pflag"
