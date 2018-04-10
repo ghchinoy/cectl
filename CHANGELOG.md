@@ -6,6 +6,20 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.14.0
+
+NEW FEATURES:
+
+* `profiles env` adds the ability to output environment variables for current profile, `CE_BASE` url and `CE_AUTH` which can be used in a curl header; can also do ` ource <(cectl profiles env)` to set env variables
+
+BUG FIXES:
+
+
+IMPROVEMENTS:
+
+* CircleCI added
+* Malformed Formulas are displayed in `formulas list` with `N/A` for success step, trigger type, and API ([#2](https://github.com/ghchinoy/cectl/issues/2))
+
 # v0.13.0
 
 NEW FEATURES:
