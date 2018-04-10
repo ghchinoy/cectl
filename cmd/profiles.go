@@ -258,6 +258,26 @@ func writeConfigAs(filename string, force bool) error {
 	return nil
 }
 
+var profilesEnvCmd = &cobra.Command{
+	Use:   "env",
+	Short: "Output bash env vars for profile",
+	Long: `Outputs bash environment variables for current profile
+Do the following to add env variables
+source <(cectl profiles env)`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("export CE_AUTH=\"%s\"\n", profilemap["auth"])
+		fmt.Printf("export CE_BASE=%s\n", profilemap["base"])
+
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(profilesCmd)
 
@@ -272,5 +292,6 @@ func init() {
 	listProfilesCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
 	profilesCmd.AddCommand(addProfileCmd)
 	profilesCmd.AddCommand(setProfileCmd)
+	profilesCmd.AddCommand(profilesEnvCmd)
 
 }
