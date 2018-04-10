@@ -14,11 +14,11 @@ NEW FEATURES:
 
 BUG FIXES:
 
-
 IMPROVEMENTS:
 
 * CircleCI added
 * Malformed Formulas are displayed in `formulas list` with `N/A` for success step, trigger type, and API ([#2](https://github.com/ghchinoy/cectl/issues/2))
+* `formulas list` now shows config count per Formula ([#9](https://github.com/ghchinoy/cectl/issues/9))
 
 # v0.13.0
 
