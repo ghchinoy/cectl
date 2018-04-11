@@ -16,7 +16,6 @@
 #   source = "github.com/myfork/project2"
 #
 # [[override]]
-<<<<<<< HEAD
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
@@ -36,26 +35,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/spf13/afero"
-=======
-#   name = "github.com/x/y"
-#   version = "2.4.0"
-#
-# [prune]
-#   non-go = false
-#   go-tests = true
-#   unused-packages = true
->>>>>>> 41c22b1e9ad273bea514e941b02e3ca3f0c31a9b
 
 
-<<<<<<< HEAD
 [[constraint]]
   name = "github.com/spf13/viper"
   version = "1.0.0"
 
 [[override]]
   name = "github.com/spf13/pflag"
-=======
-[prune]
-  go-tests = true
-  unused-packages = true
->>>>>>> 41c22b1e9ad273bea514e941b02e3ca3f0c31a9b

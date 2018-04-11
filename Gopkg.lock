@@ -11,11 +11,7 @@
   branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-<<<<<<< HEAD
   revision = "fd8267a3e95dec27f7c440b47fa101d3d8f0bf09"
-=======
-  revision = "e45a64896754070ed9808dfd039fefbe163fbf08"
->>>>>>> 41c22b1e9ad273bea514e941b02e3ca3f0c31a9b
 
 [[projects]]
   branch = "master"
@@ -94,12 +90,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-<<<<<<< HEAD
-  revision = "cd30c2a7e91a1d63fd9a0027accf18a681e9d50b"
-=======
   revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
   version = "v0.0.2"
->>>>>>> 41c22b1e9ad273bea514e941b02e3ca3f0c31a9b
 
 [[projects]]
   branch = "master"
@@ -147,10 +139,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-<<<<<<< HEAD
-  inputs-digest = "b1090f39d2081d3a782753c71bec02b8ef5e3444ccff8eed1713691e22eb5782"
-=======
-  inputs-digest = "cb0976605c9c86f28febcff8c7f32e02d5989c4bd807b14a53635c29a93ced83"
->>>>>>> 41c22b1e9ad273bea514e941b02e3ca3f0c31a9b
+  inputs-digest = "bdf61adf847a3ba91c62c3a95631d46980a5f850bedd7e548df94c57821ad351"
   solver-name = "gps-cdcl"
   solver-version = 1
