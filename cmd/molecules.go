@@ -159,7 +159,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	vdr.ObjectDefinitions = objs
 
 	// Gather Transformations
-	txs := make(map[string]map[string]ce.Transformation)
+	txs := make(map[string]map[string]interface{})
 	// Get all available transformations
 	log.Println("Getting all available Transformations")
 	bodybytes, status, _, err := ce.GetTransformations(base, auth)
@@ -197,7 +197,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 		}
 	}
 	for _, v := range elementkeys {
-		transforms := make(map[string]ce.Transformation)
+		transforms := make(map[string]interface{})
 		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
 		if err != nil {
 			break
