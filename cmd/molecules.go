@@ -265,7 +265,7 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 
 	log.Println("Exporting Transformations per Element")
 	for _, v := range elementkeys {
-		transforms := make(map[string]ce.Transformation)
+		transforms := make(map[string][]byte)
 		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
 		if err != nil {
 			break
@@ -273,17 +273,18 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		if status != 200 {
 			break
 		}
+
 		err = json.Unmarshal(bodybytes, &transforms)
+		if err != nil {
+			log.Println("unable to umarshal Transformation JSON")
+			break
+		}
 
 		for n, t := range transforms {
 			filename := fmt.Sprintf("%s_%s.transformation.json", v, n)
-			data, err := json.Marshal(t)
-			if err != nil {
-				log.Println("Error creating []byte from ce.Transform object")
-				break
-			}
+
 			log.Printf("Exporting %s", filename)
-			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), data, 0644)
+			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), t, 0644)
 			if err != nil {
 				log.Println("Error writing file")
 				break
