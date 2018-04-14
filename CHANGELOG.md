@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.14.1
+
+NEW FEATURES:
+
+BUG FIXES:
+
+* `molecules export` variants, continued fix to exporting raw JSON ([PR#51](https://github.com/ghchinoy/cectl/pull/51) 
+
+IMPROVEMENTS:
+
 # v0.14.0
 
 NEW FEATURES:
