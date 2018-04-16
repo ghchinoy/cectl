@@ -16,11 +16,13 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+* `profiles env` now also adds exports for `CE_ORG` and `CE_USER` in addition to existing `CE_BASE` and `CE_AUTH`
+
 # v0.14.0
 
 NEW FEATURES:
 
-* `profiles env` adds the ability to output environment variables for current profile, `CE_BASE` url and `CE_AUTH` which can be used in a curl header; can also do ` ource <(cectl profiles env)` to set env variables
+* `profiles env` adds the ability to output environment variables for current profile, `CE_BASE` url and `CE_AUTH` which can be used in a curl header; can also do `source <(cectl profiles env)` to set env variables
 
 BUG FIXES:
 
