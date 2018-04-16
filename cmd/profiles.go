@@ -274,6 +274,8 @@ source <(cectl profiles env)`,
 
 		fmt.Printf("export CE_AUTH=\"%s\"\n", profilemap["auth"])
 		fmt.Printf("export CE_BASE=%s\n", profilemap["base"])
+		fmt.Printf("export CE_ORG=\"%s\"\n", profilemap["org"])
+		fmt.Printf("export CE_USER=\"%s\"\n", profilemap["user"])
 
 	},
 }
