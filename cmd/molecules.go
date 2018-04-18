@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ghchinoy/ce-go/ce"
@@ -173,8 +174,8 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	}
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
-	var elementkeys []string
-	temp := make(map[string]bool)
+	var elementids []int
+	temp := make(map[int]bool)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -189,16 +190,17 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 			break
 		}
 		for _, v := range associations {
-			//fmt.Printf("%s: %s\n", k, v.Element.Key)
-			if _, ok := temp[v.Element.Key]; !ok {
-				temp[v.Element.Key] = true
-				elementkeys = append(elementkeys, v.Element.Key)
+			//fmt.Printf("%s: %s (%v)\n", k, v.Element.Key, v.Element.ID)
+			if _, ok := temp[v.Element.ID]; !ok {
+				temp[v.Element.ID] = true
+				elementids = append(elementids, v.Element.ID)
 			}
 		}
 	}
-	for _, v := range elementkeys {
+	for _, v := range elementids {
 		transforms := make(map[string]interface{})
-		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+		idstr := strconv.Itoa(v)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
@@ -207,7 +209,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 		}
 
 		err = json.Unmarshal(bodybytes, &transforms)
-		txs[v] = transforms
+		txs[idstr] = transforms
 	}
 	vdr.Transformations = txs
 
