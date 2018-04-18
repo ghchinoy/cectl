@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -175,7 +177,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
 	var elementids []int
-	temp := make(map[int]bool)
+	namemap := make(map[int]string)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -191,8 +193,8 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 		}
 		for _, v := range associations {
 			//fmt.Printf("%s: %s (%v)\n", k, v.Element.Key, v.Element.ID)
-			if _, ok := temp[v.Element.ID]; !ok {
-				temp[v.Element.ID] = true
+			if _, ok := namemap[v.Element.ID]; !ok {
+				namemap[v.Element.ID] = v.Element.Key
 				elementids = append(elementids, v.Element.ID)
 			}
 		}
@@ -209,7 +211,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 		}
 
 		err = json.Unmarshal(bodybytes, &transforms)
-		txs[idstr] = transforms
+		txs[namemap[v]] = transforms
 	}
 	vdr.Transformations = txs
 
@@ -265,6 +267,7 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		}
 	}
 
+	// TODO needs ID fixing
 	log.Println("Exporting Transformations per Element")
 	for _, v := range elementids {
 		idstr := strconv.Itoa(v)
@@ -296,6 +299,16 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	}
 
 	return nil
+}
+
+func interfaceToByte(key interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(key)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // ExportAllFormulasToDir creates a directory given and exports all Formula JSON files
