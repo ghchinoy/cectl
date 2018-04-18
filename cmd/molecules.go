@@ -241,8 +241,8 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	log.Println("Assembling unique Element keys")
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
-	var elementkeys []string
-	temp := make(map[string]bool)
+	var elementids []int
+	temp := make(map[int]bool)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -258,17 +258,18 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		}
 		for _, v := range associations {
 			//fmt.Printf("%s: %s\n", k, v.Element.Key)
-			if _, ok := temp[v.Element.Key]; !ok {
-				temp[v.Element.Key] = true
-				elementkeys = append(elementkeys, v.Element.Key)
+			if _, ok := temp[v.Element.ID]; !ok {
+				temp[v.Element.ID] = true
+				elementids = append(elementids, v.Element.ID)
 			}
 		}
 	}
 
 	log.Println("Exporting Transformations per Element")
-	for _, v := range elementkeys {
+	for _, v := range elementids {
+		idstr := strconv.Itoa(v)
 		transforms := make(map[string][]byte)
-		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
@@ -283,7 +284,7 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		}
 
 		for n, t := range transforms {
-			filename := fmt.Sprintf("%s_%s.transformation.json", v, n)
+			filename := fmt.Sprintf("%s_%s.transformation.json", idstr, n)
 
 			log.Printf("Exporting %s", filename)
 			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), t, 0644)
