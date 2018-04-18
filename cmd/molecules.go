@@ -209,7 +209,6 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 		if status != 200 {
 			break
 		}
-
 		err = json.Unmarshal(bodybytes, &transforms)
 		txs[namemap[v]] = transforms
 	}
@@ -244,7 +243,7 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
 	var elementids []int
-	temp := make(map[int]bool)
+	namemap := make(map[int]string)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -260,35 +259,39 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		}
 		for _, v := range associations {
 			//fmt.Printf("%s: %s\n", k, v.Element.Key)
-			if _, ok := temp[v.Element.ID]; !ok {
-				temp[v.Element.ID] = true
+			if _, ok := namemap[v.Element.ID]; !ok {
+				namemap[v.Element.ID] = v.Element.Key
 				elementids = append(elementids, v.Element.ID)
 			}
 		}
 	}
-
-	// TODO needs ID fixing
+	fmt.Printf("%v", elementids)
 	log.Println("Exporting Transformations per Element")
 	for _, v := range elementids {
-		idstr := strconv.Itoa(v)
 		transforms := make(map[string][]byte)
+		idstr := strconv.Itoa(v)
 		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
+		log.Printf("%s (%s)", namemap[v], idstr)
+		log.Printf("%s\n", bodybytes)
 		if status != 200 {
 			break
 		}
-
 		err = json.Unmarshal(bodybytes, &transforms)
 		if err != nil {
-			log.Println("unable to umarshal Transformation JSON")
+			log.Println("unable to umarshal Transformation JSON", err.Error())
 			break
 		}
 
 		for n, t := range transforms {
-			filename := fmt.Sprintf("%s_%s.transformation.json", idstr, n)
-
+			filename := fmt.Sprintf("%s_%s.transformation.json", namemap[v], n)
+			log.Printf("%s/%s\n", n, t)
+			// b, err := interfaceToByte(t)
+			// if err != nil {
+			// 	log.Println("Couldn't convert to bytes", err.Error())
+			// }
 			log.Printf("Exporting %s", filename)
 			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), t, 0644)
 			if err != nil {
