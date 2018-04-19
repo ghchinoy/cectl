@@ -15,11 +15,14 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ghchinoy/ce-go/ce"
@@ -173,8 +176,8 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	}
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
-	var elementkeys []string
-	temp := make(map[string]bool)
+	var elementids []int
+	namemap := make(map[int]string)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -189,25 +192,25 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 			break
 		}
 		for _, v := range associations {
-			//fmt.Printf("%s: %s\n", k, v.Element.Key)
-			if _, ok := temp[v.Element.Key]; !ok {
-				temp[v.Element.Key] = true
-				elementkeys = append(elementkeys, v.Element.Key)
+			//fmt.Printf("%s: %s (%v)\n", k, v.Element.Key, v.Element.ID)
+			if _, ok := namemap[v.Element.ID]; !ok {
+				namemap[v.Element.ID] = v.Element.Key
+				elementids = append(elementids, v.Element.ID)
 			}
 		}
 	}
-	for _, v := range elementkeys {
+	for _, v := range elementids {
 		transforms := make(map[string]interface{})
-		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+		idstr := strconv.Itoa(v)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
 		if status != 200 {
 			break
 		}
-
 		err = json.Unmarshal(bodybytes, &transforms)
-		txs[v] = transforms
+		txs[namemap[v]] = transforms
 	}
 	vdr.Transformations = txs
 
@@ -239,8 +242,8 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	log.Println("Assembling unique Element keys")
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
-	var elementkeys []string
-	temp := make(map[string]bool)
+	var elementids []int
+	namemap := make(map[int]string)
 	for k := range transformationnames {
 		bodybytes, status, _, err := ce.GetTransformationAssocation(base, auth, k)
 		if err != nil {
@@ -256,35 +259,42 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 		}
 		for _, v := range associations {
 			//fmt.Printf("%s: %s\n", k, v.Element.Key)
-			if _, ok := temp[v.Element.Key]; !ok {
-				temp[v.Element.Key] = true
-				elementkeys = append(elementkeys, v.Element.Key)
+			if _, ok := namemap[v.Element.ID]; !ok {
+				namemap[v.Element.ID] = v.Element.Key
+				elementids = append(elementids, v.Element.ID)
 			}
 		}
 	}
-
+	fmt.Printf("%v", elementids)
 	log.Println("Exporting Transformations per Element")
-	for _, v := range elementkeys {
-		transforms := make(map[string][]byte)
-		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, v)
+	for _, v := range elementids {
+		transforms := make(map[string]interface{})
+		idstr := strconv.Itoa(v)
+		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
+		log.Printf("%s (%s)", namemap[v], idstr)
+		//log.Printf("%s\n", bodybytes)
 		if status != 200 {
 			break
 		}
-
 		err = json.Unmarshal(bodybytes, &transforms)
 		if err != nil {
-			log.Println("unable to umarshal Transformation JSON")
+			log.Println("unable to umarshal Transformation JSON", err.Error())
 			break
 		}
 
 		for n, t := range transforms {
-			filename := fmt.Sprintf("%s_%s.transformation.json", v, n)
+			filename := fmt.Sprintf("%s_%s.transformation.json", namemap[v], n)
 
+			b, err := json.Marshal(t)
+			if err != nil {
+				log.Println("Couldn't convert to bytes", err.Error())
+			}
+			//log.Printf("%s\n%s\n", n, b)
 			log.Printf("Exporting %s", filename)
-			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), t, 0644)
+			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), b, 0644)
 			if err != nil {
 				log.Println("Error writing file")
 				break
@@ -293,6 +303,16 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	}
 
 	return nil
+}
+
+func interfaceToByte(key interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(key)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // ExportAllFormulasToDir creates a directory given and exports all Formula JSON files
