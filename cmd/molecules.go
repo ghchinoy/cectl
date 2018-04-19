@@ -268,14 +268,14 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	fmt.Printf("%v", elementids)
 	log.Println("Exporting Transformations per Element")
 	for _, v := range elementids {
-		transforms := make(map[string][]byte)
+		transforms := make(map[string]interface{})
 		idstr := strconv.Itoa(v)
 		bodybytes, status, _, err := ce.GetTransformationsPerElement(base, auth, idstr)
 		if err != nil {
 			break
 		}
 		log.Printf("%s (%s)", namemap[v], idstr)
-		log.Printf("%s\n", bodybytes)
+		//log.Printf("%s\n", bodybytes)
 		if status != 200 {
 			break
 		}
@@ -287,13 +287,14 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 
 		for n, t := range transforms {
 			filename := fmt.Sprintf("%s_%s.transformation.json", namemap[v], n)
-			log.Printf("%s/%s\n", n, t)
-			// b, err := interfaceToByte(t)
-			// if err != nil {
-			// 	log.Println("Couldn't convert to bytes", err.Error())
-			// }
+
+			b, err := json.Marshal(t)
+			if err != nil {
+				log.Println("Couldn't convert to bytes", err.Error())
+			}
+			//log.Printf("%s\n%s\n", n, b)
 			log.Printf("Exporting %s", filename)
-			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), t, 0644)
+			err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, filename), b, 0644)
 			if err != nil {
 				log.Println("Error writing file")
 				break
