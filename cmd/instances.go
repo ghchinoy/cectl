@@ -309,6 +309,29 @@ var instanceDocsCmd = &cobra.Command{
 	},
 }
 
+var allElementInstances bool
+
+func getAllElementInstances(base, auth string) ([]int, error) {
+	var instanceIDlist []int
+	bodybytes, statuscode, _, err := ce.GetAllInstances(base, auth)
+	if err != nil {
+		if statuscode == -1 {
+			fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+		}
+		return instanceIDlist, err
+	}
+	var instances []ce.ElementInstance
+	err = json.Unmarshal(bodybytes, &instances)
+	if err != nil {
+		return instanceIDlist, err
+	}
+	for _, v := range instances {
+		instanceIDlist = append(instanceIDlist, v.ID)
+	}
+	return instanceIDlist, nil
+
+}
+
 var deleteElementInstanceCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete an Element Instance",
@@ -320,38 +343,64 @@ var deleteElementInstanceCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		// check for Instance ID & Operation name
-		if len(args) < 1 {
-			fmt.Println("Please provide an Instance ID ")
-			return
-		}
-		if _, err := strconv.ParseInt(args[0], 10, 64); err != nil {
-			fmt.Println("Please provide an Instance ID that is an integer")
-			return
-		}
-		bodybytes, statuscode, curlcmd, err := ce.DeleteElementInstance(profilemap["base"], profilemap["auth"], args[0])
-		if err != nil {
-			if statuscode == -1 {
-				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+
+		var instanceList []int
+
+		if allElementInstances {
+			instanceList, err = getAllElementInstances(profilemap["base"], profilemap["auth"])
+		} else {
+			// check for Instance ID & Operation name
+			if len(args) < 1 {
+				fmt.Println("Please provide at least one Instance ID ")
+				return
 			}
-			fmt.Println(err)
-			os.Exit(1)
+			// must all be ints
+			for _, v := range args {
+				//log.Printf("%v\n", v)
+				id, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					fmt.Println("Please provide an Instance ID that is an integer")
+					return
+				}
+				instanceList = append(instanceList, int(id))
+			}
 		}
-		// handle global options, curl
-		if showCurl {
-			log.Println(curlcmd)
+
+		for _, id := range instanceList {
+			bodybytes, statuscode, curlcmd, err := ce.DeleteElementInstance(profilemap["base"], profilemap["auth"], strconv.Itoa(id))
+			if err != nil {
+				if statuscode == -1 {
+					fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+				}
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			// handle global options, curl
+			if showCurl {
+				log.Println(curlcmd)
+			}
+			// handle non 200
+			if statuscode != 200 {
+				if statuscode == 409 {
+					message := make(map[string]interface{})
+					_ = json.Unmarshal(bodybytes, &message)
+					fmt.Printf("Cannot delete Element Instance %v: %s\n", id, message["message"])
+				} else if statuscode == 404 {
+					fmt.Printf("Cannot delete Element Instance %v: Not found\n", id)
+				} else {
+					log.Printf("HTTP Error: %v\n", statuscode)
+				}
+				// handle this nicely, show error description
+			}
+			// handle global options, json
+			if outputJSON {
+				fmt.Printf("%s\n", bodybytes)
+				return
+			}
+			if statuscode == 200 {
+				fmt.Printf("Deleted Element Instance %v\n", id)
+			}
 		}
-		// handle non 200
-		if statuscode != 200 {
-			log.Printf("HTTP Error: %v\n", statuscode)
-			// handle this nicely, show error description
-		}
-		// handle global options, json
-		if outputJSON {
-			fmt.Printf("%s\n", bodybytes)
-			return
-		}
-		fmt.Printf("Deleted Element Instance %s", args[0])
 	},
 }
 
@@ -706,6 +755,7 @@ func init() {
 	instancesCmd.AddCommand(testInstancesCmd)
 	testInstancesCmd.PersistentFlags().BoolVarP(&removeBadInstances, "remove", "", false, "remove bad instances")
 	instancesCmd.AddCommand(deleteElementInstanceCmd)
+	deleteElementInstanceCmd.PersistentFlags().BoolVarP(&allElementInstances, "all", "", false, "delete all instances")
 	instancesCmd.AddCommand(instanceEnableCmd)
 	instancesCmd.AddCommand(instanceDisableCmd)
 	instancesCmd.AddCommand(instanceEventsEnableCmd)
