@@ -6,9 +6,11 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
-# v0.14.1
+# v0.15.0
 
 NEW FEATURES:
+
+* `instances delete` now takes either a list of IDs (1 or more) to delete multiple instances or the flag `--all` to delete all of them. Will provide an error if Element Instance is in use or not found.
 
 BUG FIXES:
 
