@@ -333,9 +333,9 @@ func getAllElementInstances(base, auth string) ([]int, error) {
 }
 
 var deleteElementInstanceCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete an Element Instance",
-	Long:  "Delete an Element Instance",
+	Use:   "delete <id [id]...>",
+	Short: "Delete Element Instance(s)",
+	Long:  "Delete Element Instance(s). Provide either an ID or a list of IDs to delete, or --all to delete all Element Instances",
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for profile
 		profilemap, err := getAuth(profile)
