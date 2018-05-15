@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.15.1
+
+NEW FEATURES:
+
+* exposes `branding set` with only the `--file` flag feature
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.15.0
 
 NEW FEATURES:
