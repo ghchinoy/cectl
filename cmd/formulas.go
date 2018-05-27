@@ -200,6 +200,9 @@ var formulaDeactivateCmd = &cobra.Command{
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
+		if showCurl {
+			log.Println(curlcmd)
+		}
 
 		var instancecount string
 		instances, err := ce.GetInstancesOfFormula(f.ID, profilemap["base"], profilemap["auth"])
@@ -320,7 +323,9 @@ var formulaActivateCmd = &cobra.Command{
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-
+		if showCurl {
+			log.Println(curlcmd)
+		}
 		var instancecount string
 		instances, err := ce.GetInstancesOfFormula(f.ID, base, auth)
 		if err != nil {
