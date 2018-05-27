@@ -177,7 +177,7 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
 	if err != nil { // couldn't get transformation names
-		log.Println(err.Error()) // shouldn't have an effect on the assmebly below
+		log.Println(err.Error()) // shouldn't have an effect on the assembly below
 	}
 	var elementids []int
 	namemap := make(map[int]string)
