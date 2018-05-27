@@ -16,6 +16,8 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+* spelling and err handling corrections
+
 # v0.15.0
 
 NEW FEATURES:

@@ -141,6 +141,10 @@ This will only invoke a manually triggerable Formula.`,
 
 		var ex []ce.FormulaInstanceCreationResponse
 		err = json.Unmarshal(bodybytes, &ex)
+		if err != nil { // that's not an array of responses
+			log.Println(err.Error())
+			return
+		}
 
 		if triggerTextOutput {
 			fmt.Print(ex[0].ID)

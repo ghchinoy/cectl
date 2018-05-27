@@ -157,10 +157,10 @@ var setBrandingCmd = &cobra.Command{
 		// TODO construct JSON object
 		var brandingobject interface{}
 
-		// TODO determine if exsiting branding, add modification to that
+		// TODO determine if existing branding, add modification to that
 		// TODO if not, utilize ce.DefaultBranding object
 
-		// TODO accomodate for image values by reading in and base64 encodding
+		// TODO accommodate for image values by reading in and base64 encodding
 		// attributes: favicon, logo
 		// should be pngs
 		if args[0] == "favicon" || args[0] == "logo" {
