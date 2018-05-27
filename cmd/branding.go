@@ -88,6 +88,7 @@ var brandingJSONFile string
 // or the flag "--file" which will read in a JSON file to set the branding
 // usage:
 // branding set [<attribute> <value>] [--file <branding.json>]
+/*
 var setBrandingCmd = &cobra.Command{
 	Use:   "set [<attribute> <value>] [--file <branding.json>]",
 	Short: "Sets Platform branding either by attribute or by file",
@@ -97,7 +98,11 @@ set branding <attribute> <value>
 or by specifying a JSON file containing branding configuration like so:
 set branding --file <branding.json>
 `,
-	Hidden: true,
+*/
+var setBrandingCmd = &cobra.Command{
+	Use:   "set --file <branding.json>",
+	Short: "Sets Platform branding by file provided",
+	Long:  `Sets Platform branding by specifying a JSON file containing branding information`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for profile
 		profilemap, err := getAuth(profile)
@@ -106,6 +111,10 @@ set branding --file <branding.json>
 			os.Exit(1)
 		}
 		// check for file
+		if brandingJSONFile == "" {
+			fmt.Printf(cmd.UsageString())
+			return
+		}
 		if brandingJSONFile != "" {
 			// read in file
 			filebytes, err := ioutil.ReadFile(brandingJSONFile)
