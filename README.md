@@ -2,7 +2,7 @@
 
 Command-line interface for Cloud Elements' Platform APIs.
 
-[![CircleCI](https://circleci.com/gh/ghchinoy/cectl.svg?style=shield)](https://circleci.com/gh/ghchinoy/cectl)
+[![CircleCI](https://circleci.com/gh/ghchinoy/cectl.svg?style=shield)](https://circleci.com/gh/ghchinoy/cectl) [![Go Report Card](https://goreportcard.com/badge/github.com/ghchinoy/cectl)](https://goreportcard.com/report/github.com/ghchinoy/cectl)
 
 ```
 Cloud Elements control is a CLI that manages the platform
