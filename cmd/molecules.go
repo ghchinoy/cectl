@@ -176,6 +176,9 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 	}
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
+	if err != nil { // couldn't get transformation names
+		log.Println(err.Error()) // shouldn't have an effect on the assmebly below
+	}
 	var elementids []int
 	namemap := make(map[int]string)
 	for k := range transformationnames {
@@ -210,6 +213,9 @@ func CombineVirtualDataResourcesForExport(base, auth string) (AllVDR, error) {
 			break
 		}
 		err = json.Unmarshal(bodybytes, &transforms)
+		if err != nil {
+			log.Println(err.Error())
+		}
 		txs[namemap[v]] = transforms
 	}
 	vdr.Transformations = txs
@@ -242,6 +248,9 @@ func ExportAllTransformationsToDir(base, auth string, dirname string) error {
 	log.Println("Assembling unique Element keys")
 	transformationnames := make(map[string]ce.Transformation)
 	err = json.Unmarshal(bodybytes, &transformationnames)
+	if err != nil {
+		log.Println("Couldn't marshal list of transformation names", err.Error())
+	}
 	var elementids []int
 	namemap := make(map[int]string)
 	for k := range transformationnames {
@@ -340,6 +349,9 @@ func ExportAllFormulasToDir(base, auth string, dirname string) error {
 		}
 		fmt.Printf("Exporting '%s' to %s/%s\n", f.Name, dirname, name)
 		err = ioutil.WriteFile(fmt.Sprintf("%s/%s", dirname, name), formulaBytes, 0644)
+		if err != nil {
+			log.Printf("Couldn't write file %s/%s", dirname, name)
+		}
 	}
 
 	return nil

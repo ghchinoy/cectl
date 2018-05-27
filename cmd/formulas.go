@@ -187,6 +187,10 @@ var formulaDeactivateCmd = &cobra.Command{
 		}
 
 		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), profilemap["base"], profilemap["auth"])
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)
@@ -303,6 +307,10 @@ var formulaActivateCmd = &cobra.Command{
 		}
 
 		formulaResponseBytes, statuscode, curlcmd, err = ce.FormulaDetailsAsBytes(strconv.Itoa(f.ID), base, auth)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 		if statuscode != 200 {
 			fmt.Printf("Unable to retrieve updated formula %s, %s\n", args[0], err.Error())
 			os.Exit(1)

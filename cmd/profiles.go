@@ -254,6 +254,9 @@ func writeConfigAs(filename string, force bool) error {
 	}
 
 	_, err = f.WriteString(s)
+	if err != nil { // issue writing string to file
+		return err
+	}
 
 	return nil
 }

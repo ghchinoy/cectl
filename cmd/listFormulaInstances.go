@@ -63,6 +63,9 @@ var listFormulaInstancesCmd = &cobra.Command{
 
 			var instances []ce.FormulaInstance
 			err = json.Unmarshal(bodybytes, &instances)
+			if err != nil {
+				log.Println("not a collection of Formula Instances", err.Error())
+			}
 			for _, v := range instances {
 
 				var configs []string

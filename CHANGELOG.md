@@ -6,6 +6,17 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.15.1
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* spelling and err handling corrections
+
+
 # v0.15.0
 
 NEW FEATURES:
