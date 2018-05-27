@@ -10,12 +10,13 @@ IMPROVEMENTS:
 
 NEW FEATURES:
 
+* exposes `branding set` with only the `--file` flag feature
+
 BUG FIXES:
 
 IMPROVEMENTS:
 
 * spelling and err handling corrections
-
 
 # v0.15.0
 
