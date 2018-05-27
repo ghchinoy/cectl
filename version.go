@@ -14,8 +14,8 @@ const (
 // Version returns the version of the app as a string
 func Version() string {
 	cectl := fmt.Sprintf("%s %s", version, versionName)
-	cego := fmt.Sprintf("%s %s", ce.Version, ce.VersionName)
-	return fmt.Sprintf("%s\n%s", cectl, cego)
+	cego := fmt.Sprintf("%s %s", ce.Version(), ce.VersionName())
+	return fmt.Sprintf("%s (%s)", cectl, cego)
 }
 
 /* in 1000s of ft
