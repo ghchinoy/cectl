@@ -19,10 +19,6 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-#[[override]]
-#  branch = "version"
-#  name = "github.com/ghchinoy/ce-go/ce"
-
 [[override]]
   branch = "master"
   name = "github.com/moul/http2curl"

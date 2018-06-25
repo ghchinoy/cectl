@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.15.2
+
+NEW FEATURES:
+
+* Hidden `lbdocs` command for `elements` to retrieve LoopBack models for an Element
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.15.1
 
 NEW FEATURES:
