@@ -8,10 +8,10 @@
   version = "v1.4.7"
 
 [[projects]]
-  branch = "lbdocs"
+  branch = "master"
   name = "github.com/ghchinoy/ce-go"
   packages = ["ce"]
-  revision = "91d78a07283bef8667af8abacec13bd53e7602be"
+  revision = "e7a77bfcafb17fceefc3ee226e62d56b7098ad09"
 
 [[projects]]
   branch = "master"
@@ -139,6 +139,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b2eebd756f4e407a40fa85188a285e4997abae1961fcbfda4eeaedd76401f4a5"
+  inputs-digest = "bdf61adf847a3ba91c62c3a95631d46980a5f850bedd7e548df94c57821ad351"
   solver-name = "gps-cdcl"
   solver-version = 1
