@@ -234,6 +234,54 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 	},
 }
 
+var lbdocsForce bool
+var lbdocsVersion string
+
+var elementLBDocsCmd = &cobra.Command{
+	Use:    "lbdocs <id|key>",
+	Short:  "Output the IBM LoopBack Model document for the Element",
+	Long:   "Outputs the IBM LoopBack Model document for the Element",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID or Element Key")
+			return
+		}
+		elementid, err := ce.ElementKeyToID(args[0], profilemap)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Get element LBDocs
+		bodybytes, statuscode, curlcmd, err := ce.GetElementLBDocs(profilemap["base"], profilemap["auth"], strconv.Itoa(elementid), lbdocsForce, lbdocsVersion)
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			// handle this nicely, show error description
+		}
+		fmt.Printf("%s", bodybytes)
+	},
+}
+
 // elementDocsCmd represents the /elements/{id}/docs API
 var elementDocsCmd = &cobra.Command{
 	Use:   "docs <id|key>",
@@ -525,6 +573,10 @@ func init() {
 	elementsCmd.AddCommand(elementExportCmd)
 	elementsCmd.AddCommand(importElementCmd)
 	//elementsCmd.AddCommand(elementModelValidation)
+	elementsCmd.AddCommand(elementLBDocsCmd)
+	elementLBDocsCmd.Flags().BoolVarP(&lbdocsForce, "force", "", false, "Force refresh of current LBDocs version")
+	elementLBDocsCmd.Flags().StringVar(&lbdocsVersion, "version", "", "LBDocs specific version")
+
 	elementsCmd.AddCommand(transformationsForElementCmd)
 
 	// order-by flag: Order element list by
