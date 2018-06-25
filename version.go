@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/ghchinoy/ce-go/ce"
 )
 
 const (
@@ -11,7 +13,9 @@ const (
 
 // Version returns the version of the app as a string
 func Version() string {
-	return fmt.Sprintf("%s %s", version, versionName)
+	cectl := fmt.Sprintf("%s %s", version, versionName)
+	cego := fmt.Sprintf("%s %s", ce.Version(), ce.VersionName())
+	return fmt.Sprintf("%s (%s)", cectl, cego)
 }
 
 /* in 1000s of ft

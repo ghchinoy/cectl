@@ -348,6 +348,10 @@ var deleteElementInstanceCmd = &cobra.Command{
 
 		if allElementInstances {
 			instanceList, err = getAllElementInstances(profilemap["base"], profilemap["auth"])
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 		} else {
 			// check for Instance ID & Operation name
 			if len(args) < 1 {

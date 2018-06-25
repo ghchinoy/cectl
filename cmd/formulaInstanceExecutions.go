@@ -99,6 +99,9 @@ var listFormulaInstanceExecutionsCmd = &cobra.Command{
 
 		var executions []ce.FormulaInstanceExecution
 		err = json.Unmarshal(bodybytes, &executions)
+		if err != nil { // can't make an array of executions
+			log.Println(err.Error())
+		}
 		i := 0
 
 		for _, v := range executions {

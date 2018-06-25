@@ -226,6 +226,10 @@ Optionally, add in a keyfilter to filter out Elements by key.`,
 				return
 			}
 			roibytes, err := output.ElementsForROICalculator(bodybytes, intbytes)
+			if err != nil {
+				log.Println("Unable to format onto JSON for the ROI Calculator", err.Error())
+				return
+			}
 			fmt.Printf("%s\n", roibytes)
 			return
 		}

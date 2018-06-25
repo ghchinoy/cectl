@@ -291,7 +291,7 @@ func importImplementation(cmd *cobra.Command, args []string) {
 
 	err = json.Unmarshal(bodybytes, &cro)
 	if err != nil {
-		fmt.Println("Unable to convert 200 reponse into a Common Resource Object")
+		fmt.Println("Unable to convert 200 response into a Common Resource Object")
 		os.Exit(1)
 	}
 
@@ -364,7 +364,7 @@ var defineResourceCmd = &cobra.Command{
 		var cro ce.CommonResource
 		err = json.Unmarshal(bodybytes, &cro)
 		if err != nil {
-			fmt.Println("Unable to convert 200 reponse into a Common Resource Object")
+			fmt.Println("Unable to convert 200 response into a Common Resource Object")
 			os.Exit(1)
 		}
 
