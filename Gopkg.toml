@@ -20,6 +20,10 @@
 #  version = "2.4.0"
 
 [[override]]
+  branch = "account"
+  name = "github.com/ghchinoy/ce-go"
+
+[[override]]
   branch = "master"
   name = "github.com/moul/http2curl"
 
