@@ -6,6 +6,17 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.15.3
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* Updates to latest ce-go client which shows user privileges with roles  in JSON output via `user list -r --json`
+
+
 # v0.15.2
 
 NEW FEATURES:
