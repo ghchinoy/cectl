@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -92,8 +93,8 @@ func initConfig() {
 		//fmt.Println("Using config file:", viper.ConfigFileUsed())
 		cfgFile = viper.ConfigFileUsed()
 	} else {
-		fmt.Println("Could not find a", cfgHelp)
-		fmt.Println(err)
-		os.Exit(1)
+		log.Println("Warning: could not find a", cfgHelp)
+		log.Println(err)
+//		os.Exit(1)
 	}
 }
