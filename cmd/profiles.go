@@ -28,6 +28,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/ghchinoy/cectl/tokens"
 )
 
 // profilesCmd represents the profile command
@@ -37,11 +39,14 @@ var profilesCmd = &cobra.Command{
 	Long:  `Add, remove, list profiles to manage Cloud Elements access`,
 }
 
+var useLoginFlow bool
+
 // addProfileCmd represents the addProfile command
 var addProfileCmd = &cobra.Command{
 	Use:   "add <profile>",
 	Short: "add a new profile",
-	Long:  `Adds a new profile to the available profiles. Provide a name to get started.`,
+	Long: `Adds a new profile to the available profiles. Provide a name to get started.
+Use the flag --login or -l to log in to CE and create profile.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// check for args, if arg, then list the details for that particular profile
 		if len(args) > 0 {
@@ -55,17 +60,29 @@ var addProfileCmd = &cobra.Command{
 			fmt.Printf("Profile %s exists.\n", profile)
 			os.Exit(1)
 		}
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("base URI: ")
-		base, _ := reader.ReadString('\n')
-		base = strings.Replace(base, "\n", "", -1)
-		fmt.Print("user token: ")
-		user, _ := reader.ReadString('\n')
-		user = strings.Replace(user, "\n", "", -1)
-		fmt.Print("org token: ")
-		org, _ := reader.ReadString('\n')
-		org = strings.Replace(org, "\n", "", -1)
 
+		var base, org, user string
+
+		// Login flow
+		if useLoginFlow {
+			var err error
+			base, org, user, err = tokens.LoginInquiry()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else { // manual entry flow
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("base URI: ")
+			base, _ = reader.ReadString('\n')
+			base = strings.Replace(base, "\n", "", -1)
+			fmt.Print("user token: ")
+			user, _ = reader.ReadString('\n')
+			user = strings.Replace(user, "\n", "", -1)
+			fmt.Print("org token: ")
+			org, _ = reader.ReadString('\n')
+			org = strings.Replace(org, "\n", "", -1)
+		}
 		viper.Set(profile+".base", base)
 		viper.Set(profile+".org", org)
 		viper.Set(profile+".user", user)
@@ -295,7 +312,10 @@ func init() {
 	profilesCmd.AddCommand(listProfilesCmd)
 	listProfilesCmd.PersistentFlags().BoolVarP(&longProfile, "long", "l", false, "show long profile")
 	listProfilesCmd.PersistentFlags().BoolVarP(&outputCSV, "csv", "", false, "output as CSV")
+
 	profilesCmd.AddCommand(addProfileCmd)
+	addProfileCmd.PersistentFlags().BoolVarP(&useLoginFlow, "login", "l", false, "prompt for login")
+
 	profilesCmd.AddCommand(setProfileCmd)
 	profilesCmd.AddCommand(profilesEnvCmd)
 
