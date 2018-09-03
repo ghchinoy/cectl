@@ -144,11 +144,11 @@ var listProfilesCmd = &cobra.Command{
 			}
 			for _, k := range profiles {
 				if k == "profile" {
-					break
+					continue
 				}
 				v := settings[k].(map[string]interface{})
 				if v["base"] == nil {
-					break
+					continue
 				}
 				data = append(data, []string{
 					k,
