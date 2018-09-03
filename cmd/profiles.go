@@ -17,6 +17,7 @@ package cmd
 import (
 	"bufio"
 	"encoding/csv"
+	"path/filepath"
 	"fmt"
 	"log"
 	"os"
@@ -37,6 +38,46 @@ var profilesCmd = &cobra.Command{
 	Use:   "profiles",
 	Short: "Manage profiles",
 	Long:  `Add, remove, list profiles to manage Cloud Elements access`,
+}
+
+var initProfilesCmd = &cobra.Command{
+	Use: "init",
+	Short: "initialize profiles toml config file",
+	Long: `Adds a cectl.toml file to the default path, doesn't overwrite if exists`,
+	Run: func (cmd *cobra.Command, args []string) {
+		if viper.IsSet(profile) {
+			fmt.Printf("cectl configuration exists at %s\n", cfgFile)
+			os.Exit(1)
+		}
+
+		cetomlFile := filepath.Join(os.Getenv("HOME"), ".config", "ce", "cectl.toml")
+		path, err := filepath.Abs(cetomlFile)
+		if err != nil {
+			log.Println(err)
+		}
+		_, err = os.Stat(path)
+		if err == nil {
+			log.Println("Configuration file exists at", path)
+			return
+		}
+
+
+		fmt.Println("Will initialize cectl configuration file at:", path)
+		dir := filepath.Dir(path)
+		if dir != "" {
+			if err := os.MkdirAll(dir, 0777); err != nil {
+				log.Println(err)
+				return
+			}
+		}
+		file, err := os.Create(path)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer file.Close()
+
+	},
 }
 
 var useLoginFlow bool
@@ -318,5 +359,6 @@ func init() {
 
 	profilesCmd.AddCommand(setProfileCmd)
 	profilesCmd.AddCommand(profilesEnvCmd)
+	profilesCmd.AddCommand(initProfilesCmd)
 
 }
