@@ -1,11 +1,11 @@
 #!/bin/bash
-# Go cross-compile 
+# Go cross-compile
 # Usually, only the VERSION changes.
 # The OSLIST and ARCHLIST can change, as well.
 # No need to change anything below ####
-# 
+#
 
-VERSION=0.15.3
+VERSION=0.16.0
 
 TOOLNAME=cectl
 OSLIST=(linux darwin windows)

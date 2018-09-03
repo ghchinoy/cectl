@@ -6,6 +6,19 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.16.0
+
+NEW FEATURES:
+
+* `profiles init` creates a new, blank cectl.toml config file if the file doesn't exist, in the default location
+* `profiles add -l` or `profiles add --login` begins an interactive login session to create a cectl.toml file
+
+BUG FIXES:
+
+* `profiles list -l` now lists all profiles rather than a truncated list
+
+IMPROVEMENTS:
+
 # v0.15.3
 
 NEW FEATURES:
@@ -15,7 +28,6 @@ BUG FIXES:
 IMPROVEMENTS:
 
 * Updates to latest ce-go client which shows user privileges with roles  in JSON output via `user list -r --json`
-
 
 # v0.15.2
 
