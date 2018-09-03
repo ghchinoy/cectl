@@ -46,6 +46,13 @@ brew update
 brew install ghchinoy/ce/cectl
 ```
 
+Then, to initialize a blank configuration file and then create a profile via a login:
+
+```
+cectl profiles init
+cectl profiles add --login
+```
+
 **On Windows, with [`scoop`](http://scoop.sh/)**
 
 
@@ -63,7 +70,15 @@ Install `cectl`:
 scoop install cectl
 ```
 
-Create a config (if you don't have one) - see below for format.
+Then, to initialize a blank configuration file and then create a profile via a login:
+
+```
+cectl profiles init
+cectl profiles add --login
+```
+
+
+Or you can manually create a config file needed to use cectl - see below for format.
 
 Example, shown using `nano` (which can be installed via `scoop install nano`):
 
@@ -91,6 +106,8 @@ go install github.com/ghchinoy/cectl
 # Config file
 
 `cectl` expects a valid configuration file in [TOML](https://github.com/toml-lang/toml) format. The configuration file's default location is in `$HOME/.config/ce/cectl.toml`.
+
+You can use `profiles init` to create a blank cectl.toml file in the default location and then `profiles add --login` to add a profile to the configuration with a Cloud Elements login.
 
 Example config file:
 
