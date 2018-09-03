@@ -11,6 +11,7 @@ Usage:
   cectl [command]
 
 Available Commands:
+  branding          Manage Branding of the Platform
   elements          Manage Elements on the Platform
   executions        Manage Formula Instance Executions
   formula-instances Manage Formula Instances
