@@ -130,13 +130,18 @@ var setBrandingCmd = &cobra.Command{
 			}
 			// invoke ce branding API with file contents as json
 			bodybytes, statuscode, curlcmd, err := ce.SetBranding(profilemap["base"], profilemap["auth"], brandingobject, debug)
-			if err != nil {
-				log.Println(err.Error())
-				os.Exit(1)
-			}
 			// handle global options, curl
 			if showCurl {
 				log.Println(curlcmd)
+			}
+			// handle global options, json
+			if outputJSON {
+				fmt.Printf("%s\n", bodybytes)
+				return
+			}
+			if err != nil {
+				log.Println(err.Error())
+				os.Exit(1)
 			}
 			// handle non 200
 			if statuscode != 200 {
@@ -201,16 +206,16 @@ var resetBrandingCmd = &cobra.Command{
 		}
 		// invoke reset branding
 		bodybytes, statuscode, curlcmd, err := ce.ResetBranding(profilemap["base"], profilemap["auth"], debug)
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
 		if err != nil {
 			if statuscode == -1 {
 				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
 			}
 			fmt.Println(err)
 			os.Exit(1)
-		}
-		// handle global options, curl
-		if showCurl {
-			log.Println(curlcmd)
 		}
 		// handle non 200
 		if statuscode == 404 {
