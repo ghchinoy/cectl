@@ -6,6 +6,18 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.17.0
+
+NEW FEATURES:
+
+* Create a job with `jobs create --file <job.json>` given a JSON config file
+* Delete a job with `jobs delete <jobid>`
+* Delete all jobs with `jobs delete --all`
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
 # v0.16.0
 
 NEW FEATURES:
