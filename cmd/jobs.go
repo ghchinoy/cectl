@@ -15,6 +15,13 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/ghchinoy/ce-go/ce"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +32,64 @@ var jobsCmd = &cobra.Command{
 	Long:  `Manage jobs on the platform`,
 }
 
+// listJobsCmd represents the listJobs command
+var listJobsCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list jobs on platform",
+	Long:  `List jobs on the platform`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		bodybytes, status, curlcmd, err := ce.ListJobs(profilemap["base"], profilemap["auth"])
+
+		if showCurl {
+
+			log.Println(curlcmd)
+		}
+
+		if outputJSON {
+			fmt.Printf("%s\n", bodybytes)
+			return
+		}
+
+		if status != 200 {
+			fmt.Print(status)
+			if status == 404 {
+				fmt.Printf("Unable to contact CE API, %s\n", profilemap["base"])
+				return
+			}
+			fmt.Println()
+		}
+
+		data := [][]string{}
+
+		var jobs []ce.Job
+		err = json.Unmarshal(bodybytes, &jobs)
+		if err != nil {
+			fmt.Printf("Response not a list of Jobs, %s", err.Error())
+			return
+		}
+		for _, v := range jobs {
+			data = append(data, []string{
+				v.ID,
+				v.Name,
+				v.Description,
+			})
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"ID", "Name", "Description"})
+		table.SetBorder(false)
+		table.AppendBulk(data)
+		table.Render()
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(jobsCmd)
 
@@ -32,4 +97,5 @@ func init() {
 	jobsCmd.PersistentFlags().BoolVarP(&outputJSON, "json", "j", false, "output as json")
 	jobsCmd.PersistentFlags().BoolVarP(&showCurl, "curl", "c", false, "show curl command")
 
+	jobsCmd.AddCommand(listJobsCmd)
 }
