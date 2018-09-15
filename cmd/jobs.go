@@ -35,6 +35,7 @@ var jobsCmd = &cobra.Command{
 
 var jobsDeleteAll bool
 var maxConcurrentDeletes int
+var maxDeleteCount int
 
 var deleteJobCmd = &cobra.Command{
 	Use:   "delete",
@@ -128,7 +129,13 @@ func deleteAllJobs(base, auth string) error {
 		go deleteJobWorker(q, i, done)
 	}
 
-	for j := 0; j < len(jobs); j++ {
+	var max int
+	if maxDeleteCount > 0 {
+		max = maxDeleteCount
+	} else {
+		max = len(jobs)
+	}
+	for j := 0; j < max; j++ {
 		go func(j int) {
 			err := deleteJob(base, auth, jobs[j].ID)
 			if err != nil {
@@ -138,7 +145,7 @@ func deleteAllJobs(base, auth string) error {
 		}(j)
 	}
 
-	for c := 0; c < len(jobs); c++ {
+	for c := 0; c < max; c++ {
 		<-done
 	}
 
@@ -325,6 +332,7 @@ func init() {
 	jobsCmd.AddCommand(createJobCmd)
 
 	deleteJobCmd.PersistentFlags().BoolVar(&jobsDeleteAll, "all", false, "delete all jobs")
-	deleteJobCmd.PersistentFlags().IntVar(&maxConcurrentDeletes, "max", 4, "max concurrent delete calls")
+	deleteJobCmd.PersistentFlags().IntVarP(&maxConcurrentDeletes, "curr", "r", 4, "max concurrent delete calls")
+	deleteJobCmd.PersistentFlags().IntVarP(&maxDeleteCount, "max", "m", 0, "max count to delete")
 	jobsCmd.AddCommand(deleteJobCmd)
 }
