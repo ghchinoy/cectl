@@ -6,6 +6,16 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.17.1
+
+NEW FEATURES:
+
+BUG FIXES:
+
+IMPROVEMENTS:
+
+* limit job deletion concurrency or max count with new flags, `curr` | `r` and `max` | `m` respectively
+
 # v0.17.0
 
 NEW FEATURES:

@@ -34,6 +34,8 @@ var jobsCmd = &cobra.Command{
 }
 
 var jobsDeleteAll bool
+var maxConcurrentDeletes int
+var maxDeleteCount int
 
 var deleteJobCmd = &cobra.Command{
 	Use:   "delete",
@@ -47,45 +49,13 @@ var deleteJobCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// if --all, then do that
 		if jobsDeleteAll == true {
-			bodybytes, status, _, err := ce.ListJobs(profilemap["base"], profilemap["auth"])
+			err := deleteAllJobs(profilemap["base"], profilemap["auth"])
 			if err != nil {
-				fmt.Println("Unable to list jobs", err.Error())
+				log.Println(err)
 				os.Exit(1)
 			}
-			if status != 200 {
-				fmt.Println("non-200 response", status)
-				os.Exit(1)
-			}
-			var jobs []ce.Job
-			err = json.Unmarshal(bodybytes, &jobs)
-			if err != nil {
-				fmt.Printf("Response not a list of Jobs, %s", err.Error())
-				return
-			}
-			if len(jobs) == 0 {
-				fmt.Print("No jobs to delete\n")
-				os.Exit(0)
-			}
-			results := make(chan DeleteJobCheck)
-			var unabletodelete []string
-			for _, v := range jobs {
-				go deleteJob(profilemap["base"], profilemap["auth"], v.ID, results)
-				//fmt.Println(v.ID)
-			}
-			var num int
-			for i := range results {
-				if i.StatusCode != 200 {
-					fmt.Printf("%v: unable to delete %s\n", i.StatusCode, i.JobID)
-					unabletodelete = append(unabletodelete, i.JobID)
-				}
-				num++
-				if len(jobs) == num {
-					close(results)
-				}
-			}
-
-			fmt.Printf("%v/%v 200\n", len(jobs)-len(unabletodelete), len(jobs))
 			os.Exit(0)
 		}
 
@@ -100,17 +70,14 @@ var deleteJobCmd = &cobra.Command{
 		if showCurl {
 			log.Println(curlcmd)
 		}
-
 		if outputJSON {
 			fmt.Printf("%s\n", bodybytes)
 			return
 		}
-
 		if err != nil {
 			fmt.Println("error", err)
 			os.Exit(1)
 		}
-
 		if status != 200 {
 			fmt.Print(status)
 			if status == 404 {
@@ -130,17 +97,110 @@ type DeleteJobCheck struct {
 	StatusCode int
 }
 
-func deleteJob(base, auth, jobID string, checks chan DeleteJobCheck) (DeleteJobCheck, error) {
-	var d DeleteJobCheck
-	log.Println(jobID)
+func deleteAllJobs(base, auth string) error {
+	// Get all jobs
+	bodybytes, status, _, err := ce.ListJobs(base, auth)
+	if err != nil {
+		fmt.Println("Unable to list jobs", err.Error())
+		return err
+	}
+	if status != 200 {
+		fmt.Println("non-200 response", status)
+		return err
+	}
+	var jobs []ce.Job
+	err = json.Unmarshal(bodybytes, &jobs)
+	if err != nil {
+		fmt.Printf("Response not a list of Jobs, %s", err.Error())
+		return err
+	}
+	if len(jobs) == 0 {
+		fmt.Print("No jobs to delete\n")
+		return nil
+	}
+
+	if maxConcurrentDeletes < 1 { // guard against 0
+		maxConcurrentDeletes = 1
+	}
+	q := make(chan int)     // queue of tasks
+	done := make(chan bool) // result of task
+
+	for i := 0; i < maxConcurrentDeletes; i++ {
+		go deleteJobWorker(q, i, done)
+	}
+
+	var max int
+	if maxDeleteCount > 0 {
+		max = maxDeleteCount
+	} else {
+		max = len(jobs)
+	}
+	for j := 0; j < max; j++ {
+		go func(j int) {
+			err := deleteJob(base, auth, jobs[j].ID)
+			if err != nil {
+				log.Println(err)
+			}
+			q <- j
+		}(j)
+	}
+
+	for c := 0; c < max; c++ {
+		<-done
+	}
+
+	return nil
+	/*
+		// delete all jobs
+		results := make(chan DeleteJobCheck)
+		var unabletodelete []string
+		for _, v := range jobs {
+			go deleteJob(base, auth, v.ID, results)
+			//fmt.Println(v.ID)
+		}
+		var num int
+		for i := range results {
+			if i.StatusCode != 200 {
+				fmt.Printf("%v: unable to delete %s\n", i.StatusCode, i.JobID)
+				unabletodelete = append(unabletodelete, i.JobID)
+			}
+			num++
+			if len(jobs) == num {
+				close(results)
+			}
+		}
+
+		// print results
+		fmt.Printf("%v/%v 200\n", len(jobs)-len(unabletodelete), len(jobs))
+		return nil
+	*/
+}
+
+func deleteJobWorker(queue chan int, worknumber int, done chan bool) {
+	for true {
+		select {
+		case k := <-queue:
+			// doing work k worknumber
+			//log.Printf("work! %v for worknumber %v", k, worknumber)
+			//log.Println(k, worknumber)
+			_ = k
+			done <- true
+		}
+	}
+}
+
+func deleteJob(base, auth, jobID string) error {
 	_, status, _, err := ce.DeleteJob(base, auth, jobID)
 	if err != nil {
-		checks <- d
-		return d, err
+		log.Println(jobID, "failed")
+		return err
 	}
-	d = DeleteJobCheck{jobID, status}
-	checks <- d
-	return d, nil
+	if status != 200 {
+		log.Println(jobID, status)
+		return fmt.Errorf("Non-200 error %v", status)
+	}
+	log.Println(jobID, "deleted")
+	return nil
 }
 
 var jobJSONFile string
@@ -272,5 +332,7 @@ func init() {
 	jobsCmd.AddCommand(createJobCmd)
 
 	deleteJobCmd.PersistentFlags().BoolVar(&jobsDeleteAll, "all", false, "delete all jobs")
+	deleteJobCmd.PersistentFlags().IntVarP(&maxConcurrentDeletes, "curr", "r", 4, "max concurrent delete calls")
+	deleteJobCmd.PersistentFlags().IntVarP(&maxDeleteCount, "max", "m", 0, "max count to delete")
 	jobsCmd.AddCommand(deleteJobCmd)
 }
