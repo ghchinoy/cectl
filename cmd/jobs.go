@@ -135,6 +135,11 @@ func deleteAllJobs(base, auth string) error {
 	} else {
 		max = len(jobs)
 	}
+	// guard against user provided max > len(jobs)
+	if len(jobs) < max {
+		log.Printf("Overriding user requested maximum value of %v to actual maximum %v", max, len(jobs))
+		max = len(jobs)
+	}
 	for j := 0; j < max; j++ {
 		go func(j int) {
 			err := deleteJob(base, auth, jobs[j].ID)
