@@ -6,7 +6,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
-# v0.17.2
+# v0.17.3
 
 NEW FEATURES:
 
