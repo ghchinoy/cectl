@@ -6,6 +6,19 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.17.2
+
+NEW FEATURES:
+
+* Code of Conduct added ([#14](https://github.com/ghchinoy/cectl/issues/14))
+
+BUG FIXES:
+
+* `jobs delete --max` now checks to determine whether user-provided max is greater than existing jobs ([#73](https://github.com/ghchinoy/cectl/issues/73))
+
+IMPROVEMENTS:
+
+
 # v0.17.1
 
 NEW FEATURES:
