@@ -6,6 +6,12 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.17.4
+
+NEW FEATURES:
+
+* Users with intellegience permission can now query metadata with hidden command `intelligence`
+
 # v0.17.3
 
 NEW FEATURES:
