@@ -36,6 +36,7 @@ var intelligenceCmd = &cobra.Command{
 		if showCurl {
 			log.Println(curlcmd)
 		}
+
 		// handle non 200
 		if statuscode != 200 {
 			log.Printf("HTTP Error: %v\n", statuscode)

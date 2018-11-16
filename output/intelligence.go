@@ -52,18 +52,22 @@ func IntelligenceMetadataTable(metadatabytes []byte, orderBy string, filterBy st
 			v.Name,
 			v.Hub,
 			v.API.Type,
-			v.AuthenticationType,
+			fmt.Sprintf("%s", v.AuthenticationTypes),
 			strconv.FormatBool(v.Transformations),
 			strconv.FormatBool(v.Active),
 			strconv.FormatBool(v.Beta),
-			v.ElementClass,
+			//v.ElementClass,
+			strconv.FormatBool(v.Discovery.NativeObjectMetadataDiscovery),
+			strconv.FormatBool(v.Discovery.NativeObjectDiscovery),
 			strconv.Itoa(v.Usage.Traffic),
 			strconv.Itoa(v.Usage.CustomerCount),
 			strconv.Itoa(v.Usage.InstanceCount),
 		})
 	}
 
+	tableheader := []string{"ID", "Key", "Name", "Hub", "API", "Authn", "Transforms", "Hidden", "Beta", "Disc Metadata (N)", "Disc Objects (N)", "Traffic", "Customers", "Instances"}
 	if asCsv == true {
+		data = append(data, tableheader)
 		w := csv.NewWriter(os.Stdout)
 		for _, record := range data {
 			if err := w.Write(record); err != nil {
@@ -76,7 +80,7 @@ func IntelligenceMetadataTable(metadatabytes []byte, orderBy string, filterBy st
 		}
 	} else {
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Key", "Name", "Hub", "API", "Authn", "Transforms", "Hidden", "Beta", "Class", "Traffic", "Customers", "Instances"})
+		table.SetHeader(tableheader)
 		table.SetBorder(false)
 		table.AppendBulk(data)
 		table.Render()
