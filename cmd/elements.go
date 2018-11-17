@@ -17,13 +17,16 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/ghchinoy/ce-go/ce"
 	"github.com/ghchinoy/cectl/output"
+	"github.com/gorilla/mux"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -545,6 +548,92 @@ var elementMetadataCmd = &cobra.Command{
 	},
 }
 
+var cheatsheetsServerPort int
+
+var cheatsheetsCmd = &cobra.Command{
+	Use:    "cheatsheets",
+	Short:  "Start a cheatsheets server",
+	Long:   `Element Cheatsheets server`,
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		bodybytes, statuscode, _, err := ce.GetIntelligence(profilemap["base"], profilemap["auth"])
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if statuscode != 200 {
+			fmt.Println("Unable to connect", statuscode)
+			os.Exit(1)
+		}
+		var intelligence ce.Intelligence
+		err = json.Unmarshal(bodybytes, &intelligence)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		portstr := fmt.Sprintf(":%v", cheatsheetsServerPort)
+
+		log.Printf("Starting Element Cheatsheet server on port %v ... Please open a web browser\n", cheatsheetsServerPort)
+		r := mux.NewRouter()
+		r.HandleFunc("/", handleCheatsheetIndex(intelligence))
+		r.HandleFunc("/{id}", handleCheatsheet(profilemap))
+		http.Handle("/", r)
+		err = http.ListenAndServe(portstr, nil)
+		if err != nil {
+			fmt.Println("Unable to start cheatsheet server on port", cheatsheetsServerPort)
+			os.Exit(1)
+		}
+	},
+}
+
+func handleCheatsheet(profilemap map[string]string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+		url := fmt.Sprintf("%s/elements/%s/cheat-sheet", profilemap["base"], id)
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			http.Error(w, "Can't form url", http.StatusInternalServerError)
+			return
+		}
+		req.Header.Add("Authorization", profilemap["auth"])
+		req.Header.Add("Accept", "text/html")
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, "Can't get cheat sheet", http.StatusNotFound)
+			return
+		}
+		bodybytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		w.Header().Set("content-type", "text/html")
+		w.Write(bodybytes)
+	}
+}
+
+func handleCheatsheetIndex(intelligence ce.Intelligence) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t, err := template.New("foo").Parse(output.CheatsheetIndexTemplate)
+		err = t.Execute(w, intelligence)
+		if err != nil {
+			log.Println(err)
+		}
+		//w.Write([]byte("hi"))
+	}
+}
+
 func getAuth(profile string) (map[string]string, error) {
 
 	profilemap := make(map[string]string)
@@ -582,6 +671,8 @@ func init() {
 	elementLBDocsCmd.Flags().StringVar(&lbdocsVersion, "version", "", "LBDocs specific version")
 
 	elementsCmd.AddCommand(transformationsForElementCmd)
+	elementsCmd.AddCommand(cheatsheetsCmd)
+	cheatsheetsCmd.Flags().IntVarP(&cheatsheetsServerPort, "port", "p", 12001, "optional port for cheatsheetserver")
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub

@@ -6,11 +6,12 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
-# v0.17.4.1
+# v0.17.4.2
 
 NEW FEATURES:
 
 * Users with intelligence permission can now query metadata with hidden command `intelligence`
+* Hidden command `elements cheatsheets` launches a local webserver for Element Cheat Sheets beta
 
 # v0.17.3
 
