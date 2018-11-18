@@ -6,6 +6,18 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+# v0.17.5
+
+NEW FEATURES:
+
+* adds `elements delete <id>` to delete an Element by ID ([#25](https://github.com/ghchinoy/cectl/issues/25))
+
+BUG FIXES:
+
+* corrects missing newline from `elements import` result ([#82](https://github.com/ghchinoy/cectl/issues/82))
+
+IMPROVEMENTS:
+
 # v0.17.4.2
 
 NEW FEATURES:

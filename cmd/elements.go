@@ -167,7 +167,7 @@ var importElementCmd = &cobra.Command{
 			log.Printf("%s", bodybytes)
 			os.Exit(1)
 		}
-		fmt.Printf("Element %s imported", e.Name)
+		fmt.Printf("Element %s imported.\n", e.Name)
 	},
 }
 
@@ -548,6 +548,53 @@ var elementMetadataCmd = &cobra.Command{
 	},
 }
 
+var deleteElementCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Deletes an Element by ID",
+	Long:  `Given an Element ID, deletes the Element on the Platform`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for profile
+		profilemap, err := getAuth(profile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// check for Element ID
+		if len(args) < 1 {
+			fmt.Println("Please provide an Element ID")
+			return
+		}
+		elementID, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Println("Element ID must be a number")
+			os.Exit(1)
+		}
+
+		bodybytes, statuscode, curlcmd, err := ce.DeleteElement(profilemap["base"], profilemap["auth"], elementID)
+		if err != nil {
+			if statuscode == -1 {
+				fmt.Println("Unable to reach CE API. Please check your configuration / profile.")
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// handle global options, curl
+		if showCurl {
+			log.Println(curlcmd)
+		}
+		// handle non 200
+		if statuscode != 200 {
+			log.Printf("HTTP Error: %v\n", statuscode)
+			fmt.Printf("%s\n", bodybytes)
+			// handle this nicely, show error description
+		}
+		if statuscode == 200 {
+			fmt.Printf("Deleted Element ID %v\n", elementID)
+		}
+
+	},
+}
+
 var cheatsheetsServerPort int
 
 var cheatsheetsCmd = &cobra.Command{
@@ -673,6 +720,7 @@ func init() {
 	elementsCmd.AddCommand(transformationsForElementCmd)
 	elementsCmd.AddCommand(cheatsheetsCmd)
 	cheatsheetsCmd.Flags().IntVarP(&cheatsheetsServerPort, "port", "p", 12001, "optional port for cheatsheetserver")
+	elementsCmd.AddCommand(deleteElementCmd)
 
 	// order-by flag: Order element list by
 	// --order-by key|name|id|hub
