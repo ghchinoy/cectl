@@ -167,7 +167,7 @@ var importElementCmd = &cobra.Command{
 			log.Printf("%s", bodybytes)
 			os.Exit(1)
 		}
-		fmt.Printf("Element %s imported", e.Name)
+		fmt.Printf("Element %s imported.\n", e.Name)
 	},
 }
 
