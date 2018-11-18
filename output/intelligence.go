@@ -100,3 +100,39 @@ func selectOut(filter string, intelligence ce.Intelligence) ce.Intelligence {
 	return i
 
 }
+
+// CheatsheetIndexTemplate is the main HTML template for the Elements cheatsheet container
+var CheatsheetIndexTemplate = `
+<html lang="en">
+<head>
+<title>Cloud Elements - Cheatsheets</title>
+</head>
+<body>
+
+<script type="text/javascript">
+function getElement(obj) {
+  var value = obj.value;
+  fetch("/" + value)
+	.then(response => response.text())
+	.then(replaceCheatsheet);
+}
+
+function replaceCheatsheet(data) {
+	//console.log(data);
+    document.getElementById("cheatsheet").innerHTML = data;
+}
+</script>
+
+<form>
+	<select onChange="getElement(this)">
+		{{range .}}<option value="{{.ID}}">{{.Name}}</option>
+		{{end}}
+	</select>
+</form>
+
+<div id="cheatsheet">
+</div>
+
+</body>
+</html>
+`
